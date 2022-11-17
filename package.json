@@ -57,7 +57,7 @@
     "optimize-svg-assets": "svgo --multipass --config=\"./svgo.config.js\"",
     "build-vsce": "pnpm --filter @sourcegraph/vscode run build",
     "watch-vsce": "pnpm --filter @sourcegraph/vscode run watch",
-    "postinstall":  "set-project-references --save && pnpm run format:tsconfig",
+    "postinstall": "set-project-references --save && pnpm run format:tsconfig",
     "postuninstall": "set-project-references --save && pnpm run format:tsconfig"
   },
   "nyc": {
@@ -301,6 +301,7 @@
     "postcss-loader": "^7.0.2",
     "postcss-modules": "^6.0.0",
     "prettier": "2.8.1",
+    "prettier-plugin-svelte": "^2.9.0",
     "process": "^0.11.10",
     "punycode": "2.1.1",
     "puppeteer": "^13.5.1",
@@ -504,5 +505,4 @@
     "tslib": "2.1.0",
     "jsprim": "1.4.2"
   }
-
 }
