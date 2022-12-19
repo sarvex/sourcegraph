@@ -4,5 +4,6 @@
     "allowJs": true
   },
   "extends": "./tsconfig.json",
-  "include": ["./*", "./.*", "client/*/*", "client/*/.*"]
+  "exclude": ["node_modules"],
+  "include": ["client/web", "client/wildcard", "client/branded", "client/shared"]
 }

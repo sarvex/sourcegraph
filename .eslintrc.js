@@ -218,6 +218,11 @@ See https://handbook.sourcegraph.com/community/faq#is-all-of-sourcegraph-open-so
         schema: 'always',
       },
     ],
+
+    // TODO(sqs): these are the slowest per `TIMING=1 node_modules/.bin/eslint client/web/src/repo/blob/Blob.tsx`
+    'etc/no-deprecated': 'off',
+    '@typescript-eslint/no-misused-promises': 'off',
+    '@typescript-eslint/no-unsafe-assignment': 'off',
   },
   overrides: [
     {
