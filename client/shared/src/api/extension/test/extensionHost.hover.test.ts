@@ -69,7 +69,7 @@ describe('getHover from ExtensionHost API, it aims to have more e2e feel', () =>
             { isLoading: true, result: null },
             {
                 isLoading: false,
-                result: { contents: [textHover('a1').contents], alerts: [], aggregatedBadges: [] },
+                result: { contents: [textHover('a1').contents], aggregatedBadges: [] },
             },
         ])
         results = []
@@ -82,13 +82,12 @@ describe('getHover from ExtensionHost API, it aims to have more e2e feel', () =>
         expect(results).toEqual<MaybeLoadingResult<HoverMerged | null>[]>([
             {
                 isLoading: true,
-                result: { contents: [textHover('a2').contents], alerts: [], aggregatedBadges: [] },
+                result: { contents: [textHover('a2').contents], aggregatedBadges: [] },
             },
             {
                 isLoading: false,
                 result: {
                     contents: ['a2', 'b'].map(value => textHover(value).contents),
-                    alerts: [],
                     aggregatedBadges: [],
                 },
             },
@@ -102,7 +101,7 @@ describe('getHover from ExtensionHost API, it aims to have more e2e feel', () =>
             { isLoading: true, result: null },
             {
                 isLoading: false,
-                result: { contents: [textHover('a3').contents], alerts: [], aggregatedBadges: [] },
+                result: { contents: [textHover('a3').contents], aggregatedBadges: [] },
             },
         ])
     })

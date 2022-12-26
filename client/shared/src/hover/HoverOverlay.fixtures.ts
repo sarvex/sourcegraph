@@ -1,4 +1,3 @@
-import { action } from '@storybook/addon-actions'
 import { createMemoryHistory } from 'history'
 import { of } from 'rxjs'
 
@@ -25,7 +24,6 @@ export const commonProps = (): HoverOverlayProps & SettingsCascadeProps => ({
     platformContext: NOOP_PLATFORM_CONTEXT,
     isLightTheme: true,
     overlayPosition: { top: 16, left: 16 },
-    onAlertDismissed: action('onAlertDismissed'),
     settingsCascade: EMPTY_SETTINGS_CASCADE,
 })
 

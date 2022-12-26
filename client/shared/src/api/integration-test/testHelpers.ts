@@ -6,7 +6,6 @@ import * as sourcegraph from 'sourcegraph'
 
 import { EndpointPair, PlatformContext } from '../../platform/context'
 import { createExtensionHostClientConnection } from '../client/connection'
-import { ExposedToClient } from '../client/mainthread-api'
 import { FlatExtensionHostAPI, MainThreadAPI } from '../contract'
 import { InitData, startExtensionHost } from '../extension/extensionHost'
 import { WorkspaceRootWithMetadata } from '../extension/extensionHostApi'
@@ -46,8 +45,6 @@ interface Mocks
         | 'requestGraphQL'
         | 'getScriptURLForExtension'
         | 'clientApplication'
-        | 'showMessage'
-        | 'showInputBox'
     > {}
 
 const NOOP_MOCKS: Mocks = {
@@ -72,7 +69,6 @@ export async function integrationTestContext(
         extensionAPI: typeof sourcegraph
         extensionHostAPI: Remote<FlatExtensionHostAPI>
         mainThreadAPI: MainThreadAPI
-        exposedToClient: ExposedToClient
     } & Unsubscribable
 > {
     const mocks = partialMocks ? { ...NOOP_MOCKS, ...partialMocks } : NOOP_MOCKS
@@ -95,11 +91,7 @@ export async function integrationTestContext(
         clientApplication: 'sourcegraph',
     }
 
-    const {
-        api: extensionHostAPI,
-        mainThreadAPI,
-        exposedToClient,
-    } = await createExtensionHostClientConnection(
+    const { api: extensionHostAPI, mainThreadAPI } = await createExtensionHostClientConnection(
         Promise.resolve({
             endpoints: clientEndpoints,
             subscription: new Subscription(),
@@ -118,7 +110,6 @@ export async function integrationTestContext(
         extensionAPI,
         extensionHostAPI,
         mainThreadAPI,
-        exposedToClient,
         unsubscribe: () => extensionHost.unsubscribe(),
     }
 }

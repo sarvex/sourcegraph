@@ -333,7 +333,6 @@ const NOOP_EXTENSIONS_CONTROLLER: Controller = {
             removeViewer: () => {},
         })
     ),
-    commandErrors: EMPTY,
     unsubscribe: noop,
 }
 

@@ -1,8 +1,6 @@
-import { from, Subscription } from 'rxjs'
-import { switchMap } from 'rxjs/operators'
+import { Subscription } from 'rxjs'
 
 import type { InitData } from '../api/extension/extensionHost'
-import { syncPromiseSubscription } from '../api/util'
 import type { PlatformContext } from '../platform/context'
 
 import type { Controller } from './controller'
@@ -23,8 +21,6 @@ export function createController(
         | 'settings'
         | 'getGraphQLClient'
         | 'requestGraphQL'
-        | 'showMessage'
-        | 'showInputBox'
         | 'getScriptURLForExtension'
         | 'getStaticExtensions'
         | 'telemetryService'
@@ -47,19 +43,12 @@ export function createController(
     // TODO: Debug helpers, logging
 
     return {
-        executeCommand: (parameters, suppressNotificationOnError) =>
-            extensionHostClientPromise.then(({ exposedToClient }) =>
-                exposedToClient.executeCommand(parameters, suppressNotificationOnError)
-            ),
-        commandErrors: from(extensionHostClientPromise).pipe(
-            switchMap(({ exposedToClient }) => exposedToClient.commandErrors)
-        ),
-        registerCommand: entryToRegister =>
-            syncPromiseSubscription(
-                extensionHostClientPromise.then(({ exposedToClient }) =>
-                    exposedToClient.registerCommand(entryToRegister)
-                )
-            ),
+        executeCommand: () => {
+            throw new Error('not implemented')
+        },
+        registerCommand: () => {
+            throw new Error('not implemented')
+        },
         extHostAPI: extensionHostClientPromise.then(({ api }) => api),
         unsubscribe: () => subscriptions.unsubscribe(),
     }

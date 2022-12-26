@@ -199,22 +199,6 @@ export interface PlatformContext {
      * the extension host will not activate any other settings (e.g. extensions from user settings)
      */
     getStaticExtensions?: () => Observable<ExecutableExtension[] | undefined>
-
-    /**
-     * Display a modal message from an extension to the user.
-     *
-     * @param message The message to display
-     * @returns a Promise that resolves when the user dismisses the message
-     */
-    showMessage?(message: string): Promise<void>
-
-    /**
-     * Displays an input box for an extension that asks the user for input.
-     *
-     * @param options Configures the behavior of the input box.
-     * @returns The string provided by the user, or `undefined` if the input box was canceled.
-     */
-    showInputBox?(options: InputBoxOptions | undefined): Promise<string | undefined>
 }
 
 /**

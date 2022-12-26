@@ -8,7 +8,7 @@ import { DeepReplace, ErrorLike } from '@sourcegraph/common'
 import * as clientType from '@sourcegraph/extension-api-types'
 import { GraphQLResult } from '@sourcegraph/http-client'
 
-import type { ReferenceContext, InputBoxOptions } from '../codeintel/legacy-extensions/api'
+import type { ReferenceContext } from '../codeintel/legacy-extensions/api'
 import { ConfiguredExtension } from '../extensions/extension'
 import { SettingsCascade } from '../settings/settings'
 
@@ -19,8 +19,6 @@ import {
     ViewContexts,
     PanelViewData,
     ViewProviderResult,
-    ProgressNotification,
-    PlainNotification,
     ContributionOptions,
 } from './extension/extensionHostApi'
 import { ExtensionViewer, TextDocumentData, ViewerData, ViewerId, ViewerUpdate } from './viewerTypes'
@@ -134,10 +132,6 @@ export interface FlatExtensionHostAPI {
      */
     removeViewer(viewer: ViewerId): void
 
-    // Notifications
-    getPlainNotifications: () => ProxySubscribable<PlainNotification>
-    getProgressNotifications: () => ProxySubscribable<ProgressNotification & ProxyMarked>
-
     // Views
     getPanelViews: () => ProxySubscribable<PanelViewData[]>
 
@@ -191,10 +185,6 @@ export interface MainThreadAPI {
         name: string,
         command: Remote<((...args: any) => any) & ProxyMarked>
     ) => Unsubscribable & ProxyMarked
-
-    // User interaction methods
-    showMessage: (message: string) => Promise<void>
-    showInputBox: (options?: InputBoxOptions) => Promise<string | undefined>
 
     getScriptURLForExtension: () =>
         | undefined

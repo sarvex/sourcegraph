@@ -6,7 +6,6 @@ import BarChartIcon from 'mdi-react/BarChartIcon'
 import BookOutlineIcon from 'mdi-react/BookOutlineIcon'
 import MagnifyIcon from 'mdi-react/MagnifyIcon'
 
-import { ContributableMenu } from '@sourcegraph/client-api'
 import { isErrorLike, isMacPlatform } from '@sourcegraph/common'
 import { ExtensionsControllerProps } from '@sourcegraph/shared/src/extensions/controller'
 import { shortcutDisplayName } from '@sourcegraph/shared/src/keyboardShortcuts'
@@ -26,7 +25,6 @@ import { CodeMonitoringLogo } from '../code-monitoring/CodeMonitoringLogo'
 import { CodeMonitoringProps } from '../codeMonitoring'
 import { BrandLogo } from '../components/branding/BrandLogo'
 import { getFuzzyFinderFeatureFlags } from '../components/fuzzyFinder/FuzzyFinderFeatureFlag'
-import { WebCommandListPopoverButton } from '../components/shared'
 import { useHandleSubmitFeedback, useRoutesMatch } from '../hooks'
 import { CodeInsightsProps } from '../insights/types'
 import { isCodeInsightsEnabled } from '../insights/utils/is-code-insights-enabled'
@@ -298,16 +296,6 @@ export const GlobalNavbar: React.FunctionComponent<React.PropsWithChildren<Globa
                         </ButtonLink>
                     )}
                     {fuzzyFinderNavbar && FuzzyFinderNavItem(props.setFuzzyFinderIsVisible)}
-                    {props.authenticatedUser && extensionsController !== null && enableLegacyExtensions && (
-                        <NavAction>
-                            <WebCommandListPopoverButton
-                                {...props}
-                                extensionsController={extensionsController}
-                                location={location}
-                                menu={ContributableMenu.CommandPalette}
-                            />
-                        </NavAction>
-                    )}
                     {props.authenticatedUser?.siteAdmin && (
                         <NavAction>
                             <StatusMessagesNavItem />

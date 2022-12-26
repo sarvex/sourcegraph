@@ -1,16 +1,14 @@
 import { Remote, proxy } from 'comlink'
-import { Unsubscribable, Subscription, from, Observable, Subject, of } from 'rxjs'
+import { Unsubscribable, Subscription, from, of } from 'rxjs'
 import { publishReplay, refCount, switchMap } from 'rxjs/operators'
 
-import { asError, logger } from '@sourcegraph/common'
+import { logger } from '@sourcegraph/common'
 
-import { InputBoxOptions } from '../../codeintel/legacy-extensions/api'
 import { registerBuiltinClientCommands } from '../../commands/commands'
 import { PlatformContext } from '../../platform/context'
 import { isSettingsValid } from '../../settings/settings'
 import { FlatExtensionHostAPI, MainThreadAPI } from '../contract'
 import { proxySubscribable } from '../extension/api/common'
-import { NotificationType, PlainNotification } from '../extension/extensionHostApi'
 
 import { ProxySubscription } from './api/common'
 import { getEnabledExtensions } from './enabledExtensions'
@@ -37,24 +35,6 @@ export interface ExecuteCommandParameters {
     args?: any[]
 }
 
-function messageFromExtension(message: string): string {
-    return `From extension:\n\n${message}`
-}
-
-/**
- * For state that needs to live in the main thread.
- * Returned to Controller for access by client applications.
- */
-export interface ExposedToClient {
-    registerCommand: (entryToRegister: CommandEntry) => Unsubscribable
-    executeCommand: (parameters: ExecuteCommandParameters, suppressNotificationOnError?: boolean) => Promise<any>
-
-    /**
-     * Observable of error notifications as a result of client applications executing commands.
-     */
-    commandErrors: Observable<PlainNotification>
-}
-
 export const initMainThreadAPI = (
     extensionHost: Remote<FlatExtensionHostAPI>,
     platformContext: Pick<
@@ -63,14 +43,12 @@ export const initMainThreadAPI = (
         | 'settings'
         | 'getGraphQLClient'
         | 'requestGraphQL'
-        | 'showMessage'
-        | 'showInputBox'
         | 'getScriptURLForExtension'
         | 'getStaticExtensions'
         | 'telemetryService'
         | 'clientApplication'
     >
-): { api: MainThreadAPI; exposedToClient: ExposedToClient; subscription: Subscription } => {
+): { api: MainThreadAPI; subscription: Subscription } => {
     const subscription = new Subscription()
 
     subscription.add(
@@ -108,23 +86,6 @@ export const initMainThreadAPI = (
 
     subscription.add(registerBuiltinClientCommands(platformContext, extensionHost, registerCommand))
 
-    const commandErrors = new Subject<PlainNotification>()
-    const exposedToClient: ExposedToClient = {
-        registerCommand,
-        executeCommand: (parameters, suppressNotificationOnError) =>
-            executeCommand(parameters).catch(error => {
-                if (!suppressNotificationOnError) {
-                    commandErrors.next({
-                        message: asError(error).message,
-                        type: NotificationType.Error,
-                        source: parameters.command,
-                    })
-                }
-                return Promise.reject(error)
-            }),
-        commandErrors,
-    }
-
     const api: MainThreadAPI = {
         applySettingsEdit: edit => updateSettings(platformContext, edit),
         requestGraphQL: (request, variables) =>
@@ -143,11 +104,6 @@ export const initMainThreadAPI = (
             subscription.add(new ProxySubscription(run))
             return proxy(subscription)
         },
-        // User interaction methods
-        showMessage: message =>
-            platformContext.showMessage ? platformContext.showMessage(message) : defaultShowMessage(message),
-        showInputBox: options =>
-            platformContext.showInputBox ? platformContext.showInputBox(options) : defaultShowInputBox(options),
 
         getScriptURLForExtension: () => {
             const getScriptURL = platformContext.getScriptURLForExtension()
@@ -178,19 +134,5 @@ export const initMainThreadAPI = (
         logExtensionMessage: (...data) => logger.log(...data),
     }
 
-    return { api, exposedToClient, subscription }
-}
-
-function defaultShowMessage(message: string): Promise<void> {
-    return new Promise<void>(resolve => {
-        alert(messageFromExtension(message))
-        resolve()
-    })
-}
-
-function defaultShowInputBox(options?: InputBoxOptions): Promise<string | undefined> {
-    return new Promise<string | undefined>(resolve => {
-        const response = prompt(messageFromExtension(options?.prompt ?? ''), options?.value)
-        resolve(response ?? undefined)
-    })
+    return { api, subscription }
 }

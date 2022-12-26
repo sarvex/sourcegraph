@@ -14,13 +14,10 @@ import * as uuid from 'uuid'
 import { logger } from '@sourcegraph/common'
 import { GraphQLClient, HTTPStatusError } from '@sourcegraph/http-client'
 import { SharedSpanName, TraceSpanProvider } from '@sourcegraph/observability-client'
-import { NotificationType } from '@sourcegraph/shared/src/api/extension/extensionHostApi'
 import { FetchFileParameters, fetchHighlightedFileLineRanges } from '@sourcegraph/shared/src/backend/file'
 import { setCodeIntelSearchContext } from '@sourcegraph/shared/src/codeintel/searchContext'
 import { Controller as ExtensionsController } from '@sourcegraph/shared/src/extensions/controller'
 import { createController as createExtensionsController } from '@sourcegraph/shared/src/extensions/createLazyLoadedController'
-import { BrandedNotificationItemStyleProps } from '@sourcegraph/shared/src/notifications/NotificationItem'
-import { Notifications } from '@sourcegraph/shared/src/notifications/Notifications'
 import { PlatformContext } from '@sourcegraph/shared/src/platform/context'
 import { ShortcutProvider } from '@sourcegraph/shared/src/react-shortcuts'
 import {
@@ -144,16 +141,6 @@ interface SourcegraphWebAppState extends SettingsCascadeProps {
      * Whether globbing is enabled for filters.
      */
     globbing: boolean
-}
-
-const notificationStyles: BrandedNotificationItemStyleProps = {
-    notificationItemVariants: {
-        [NotificationType.Log]: 'secondary',
-        [NotificationType.Success]: 'success',
-        [NotificationType.Info]: 'info',
-        [NotificationType.Warning]: 'warning',
-        [NotificationType.Error]: 'danger',
-    },
 }
 
 const WILDCARD_THEME: WildcardTheme = {
@@ -395,13 +382,6 @@ export class SourcegraphWebApp extends React.Component<
                         />
                     </CompatRouter>
                 </Router>
-                {this.extensionsController !== null && window.context.enableLegacyExtensions ? (
-                    <Notifications
-                        key={2}
-                        extensionsController={this.extensionsController}
-                        notificationItemStyleProps={notificationStyles}
-                    />
-                ) : null}
                 <UserSessionStores />
             </ComponentsComposer>
         )

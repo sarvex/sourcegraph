@@ -24,8 +24,6 @@ export interface VSCodePlatformContext
         | 'updateSettings'
         | 'settings'
         | 'getGraphQLClient'
-        | 'showMessage'
-        | 'showInputBox'
         | 'getScriptURLForExtension'
         | 'getStaticExtensions'
         | 'telemetryService'
@@ -61,8 +59,6 @@ export function createPlatformContext(extensionCoreAPI: Comlink.Remote<Extension
         telemetryService: new EventLogger(extensionCoreAPI),
         clientApplication: 'other', // TODO add 'vscode-extension' to `clientApplication`,
         getScriptURLForExtension: () => undefined,
-        // TODO showInputBox
-        // TODO showMessage
         getStaticExtensions: () => getInlineExtensions(),
     }
 

@@ -10,8 +10,6 @@ import browserExtensionStyles from '@sourcegraph/browser/src/app.scss'
 import bitbucketCodeHostStyles from '@sourcegraph/browser/src/shared/code-hosts/bitbucket/codeHost.module.scss'
 import { registerHighlightContributions } from '@sourcegraph/common'
 
-import { NotificationType } from '../api/extension/extensionHostApi'
-
 import { HoverOverlay, HoverOverlayClassProps } from './HoverOverlay'
 import { commonProps, FIXTURE_ACTIONS, FIXTURE_CONTENT, FIXTURE_SEMANTIC_BADGE } from './HoverOverlay.fixtures'
 
@@ -42,14 +40,6 @@ const BITBUCKET_CLASS_PROPS: HoverOverlayClassProps = {
     className: 'aui-dialog',
     actionItemClassName: classNames('aui-button', bitbucketCodeHostStyles.hoverActionItem),
     iconClassName: 'aui-icon',
-    getAlertClassName: alertKind => {
-        switch (alertKind) {
-            case NotificationType.Error:
-                return 'aui-message aui-message-error'
-            default:
-                return 'aui-message aui-message-info'
-        }
-    },
 }
 
 export const BitbucketStyles: Story = (props = {}) => (
