@@ -574,10 +574,6 @@
       "minimum": 0,
       "default": 0
     },
-    "codeIntelligence.maxPanelResults": {
-      "description": "Maximum number of references/definitions (or other code intelligence results provided by extensions) shown in the panel. If not set a default value will be used to ensure best performance.",
-      "type": "integer"
-    },
     "codeIntelligence.clickToGoToDefinition": {
       "description": "Enable click to go to definition.",
       "type": "boolean",
