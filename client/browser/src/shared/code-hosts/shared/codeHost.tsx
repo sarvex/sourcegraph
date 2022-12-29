@@ -33,7 +33,6 @@ import {
     distinctUntilChanged,
     retryWhen,
     mapTo,
-    take,
 } from 'rxjs/operators'
 
 import { HoverMerged } from '@sourcegraph/client-api'
@@ -60,7 +59,6 @@ import { ActionItemAction } from '@sourcegraph/shared/src/actions/ActionItem'
 import { wrapRemoteObservable } from '@sourcegraph/shared/src/api/client/api/common'
 import { isRepoNotFoundErrorLike } from '@sourcegraph/shared/src/backend/errors'
 import { Controller } from '@sourcegraph/shared/src/extensions/controller'
-import { getHoverActions, registerHoverContributions } from '@sourcegraph/shared/src/hover/actions'
 import { HoverContext, HoverOverlay, HoverOverlayClassProps } from '@sourcegraph/shared/src/hover/HoverOverlay'
 import { PlatformContext, URLToFileContext } from '@sourcegraph/shared/src/platform/context'
 import { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
@@ -327,15 +325,6 @@ function initCodeIntelligence({
 
     const containerComponentUpdates = new Subject<void>()
 
-    subscription.add(
-        registerHoverContributions({
-            extensionsController,
-            platformContext,
-            history: H.createBrowserHistory(),
-            locationAssign: location.assign.bind(location),
-        })
-    )
-
     // Code views come and go, but there is always a single hoverifier on the page
     const hoverifier = createHoverifier<
         RepoSpec & RevisionSpec & FileSpec & ResolvedRevisionSpec,
@@ -388,14 +377,7 @@ function initCodeIntelligence({
                           )
                 )
             ),
-        getActions: context =>
-            // Prevent GraphQL requests that we know will result in error/null when the repo is private (and not added to Cloud)
-            repoSyncErrors.pipe(
-                take(1),
-                switchMap(hasRepoSyncError =>
-                    hasRepoSyncError ? of([]) : getHoverActions({ extensionsController, platformContext }, context)
-                )
-            ),
+        getActions: () => of([]),
         tokenize: codeHost.codeViewsRequireTokenization,
     })
 

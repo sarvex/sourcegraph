@@ -1,15 +1,14 @@
 import React, { Suspense, useEffect, useMemo } from 'react'
 
-import { BrowserRouter, Route, RouteComponentProps, Switch, useHistory } from 'react-router-dom'
+import { BrowserRouter, Route, RouteComponentProps, Switch } from 'react-router-dom'
 import { CompatRouter } from 'react-router-dom-v5-compat'
 
-import { createController as createExtensionsController } from '@sourcegraph/shared/src/extensions/createSyncLoadedController'
 import { lazyComponent } from '@sourcegraph/shared/src/util/lazyComponent'
 import { Alert, LoadingSpinner, setLinkComponent, WildcardTheme, WildcardThemeContext } from '@sourcegraph/wildcard'
 
 import '../../SourcegraphWebApp.scss'
 
-import { GlobalContributions } from '../../contributions'
+import { useGlobalContributions } from '../../contributions'
 import { createPlatformContext } from '../../platform/context'
 import { useTheme, ThemePreference } from '../../theme'
 
@@ -51,8 +50,8 @@ export const EmbeddedWebApp: React.FunctionComponent<React.PropsWithChildren<unk
     }, [isLightTheme])
 
     const platformContext = useMemo(() => createPlatformContext(), [])
-    const extensionsController = useMemo(() => createExtensionsController(platformContext), [platformContext])
-    const history = useHistory()
+
+    useGlobalContributions()
 
     // 🚨 SECURITY: The `EmbeddedWebApp` is intended to be embedded into 3rd party sites where we do not have total control.
     // That is why it is essential to be mindful when adding new routes that may be vulnerable to clickjacking or similar exploits.
@@ -97,11 +96,6 @@ export const EmbeddedWebApp: React.FunctionComponent<React.PropsWithChildren<unk
                                 />
                             </Switch>
                         </Suspense>
-                        <GlobalContributions
-                            extensionsController={extensionsController}
-                            platformContext={platformContext}
-                            history={history}
-                        />
                     </div>
                 </WildcardThemeContext.Provider>
             </CompatRouter>

@@ -30,7 +30,7 @@ import { LazyFuzzyFinder } from './components/fuzzyFinder/LazyFuzzyFinder'
 import { KeyboardShortcutsHelp } from './components/KeyboardShortcutsHelp/KeyboardShortcutsHelp'
 import { useScrollToLocationHash } from './components/useScrollToLocationHash'
 import { useUserHistory } from './components/useUserHistory'
-import { GlobalContributions } from './contributions'
+import { useGlobalContributions } from './contributions'
 import { useFeatureFlag } from './featureFlags/useFeatureFlag'
 import { GlobalAlerts } from './global/GlobalAlerts'
 import { useHandleSubmitFeedback } from './hooks'
@@ -172,6 +172,8 @@ export const Layout: React.FunctionComponent<React.PropsWithChildren<LayoutProps
     //     setTosAccepted(true)
     // }, [])
 
+    useGlobalContributions()
+
     // Remove trailing slash (which is never valid in any of our URLs).
     if (props.location.pathname !== '/' && props.location.pathname.endsWith('/')) {
         return <Redirect to={{ ...props.location, pathname: props.location.pathname.slice(0, -1) }} />
@@ -285,12 +287,6 @@ export const Layout: React.FunctionComponent<React.PropsWithChildren<LayoutProps
                         />
                     </Panel>
                 )}
-            <GlobalContributions
-                key={3}
-                extensionsController={props.extensionsController}
-                platformContext={props.platformContext}
-                history={props.history}
-            />
             {(isSearchNotebookListPage || (isSearchRelatedPage && !isSearchHomepage)) && (
                 <NotepadContainer onCreateNotebook={props.onCreateNotebookFromNotepad} />
             )}

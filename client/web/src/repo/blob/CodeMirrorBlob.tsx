@@ -204,7 +204,6 @@ export const Blob: React.FunctionComponent<BlobProps> = props => {
                       blobInfo,
                       initialSelection: position,
                       extensionsController,
-                      enableSelectionDrivenCodeNavigation,
                   })
                 : [],
             blobPropsCompartment.of(blobProps),

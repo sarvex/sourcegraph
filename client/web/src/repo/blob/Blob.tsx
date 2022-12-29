@@ -14,6 +14,7 @@ import {
     ReplaySubject,
     Subscription,
     Subject,
+    of,
 } from 'rxjs'
 import { concatMap, filter, first, map, mapTo, pairwise, switchMap, tap, withLatestFrom } from 'rxjs/operators'
 import useDeepCompareEffect from 'use-deep-compare-effect'
@@ -43,7 +44,6 @@ import { FlatExtensionHostAPI } from '@sourcegraph/shared/src/api/contract'
 import { haveInitialExtensionsLoaded } from '@sourcegraph/shared/src/api/features'
 import { ViewerId } from '@sourcegraph/shared/src/api/viewerTypes'
 import { ExtensionsControllerProps } from '@sourcegraph/shared/src/extensions/controller'
-import { getHoverActions } from '@sourcegraph/shared/src/hover/actions'
 import { HoverContext, PinOptions } from '@sourcegraph/shared/src/hover/HoverOverlay'
 import { getModeFromPath } from '@sourcegraph/shared/src/languages'
 import { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
@@ -203,7 +203,6 @@ export const Blob: React.FunctionComponent<React.PropsWithChildren<BlobProps>> =
         isLightTheme,
         extensionsController,
         blobInfo,
-        platformContext,
         settingsCascade,
         role,
         ariaLabel,
@@ -368,17 +367,9 @@ export const Blob: React.FunctionComponent<React.PropsWithChildren<BlobProps>> =
                         getLSPTextDocumentPositionParameters(context, getModeFromPath(context.filePath)),
                         { extensionsController }
                     ),
-                getActions: context => getHoverActions({ extensionsController, platformContext }, context),
+                getActions: () => of([]),
             }),
-        [
-            popoverParameter,
-            popoverCloses,
-            hoverOverlayElements,
-            rerenders,
-            blobElements,
-            extensionsController,
-            platformContext,
-        ]
+        [popoverParameter, popoverCloses, hoverOverlayElements, rerenders, blobElements, extensionsController]
     )
     useEffect(() => () => hoverifier.unsubscribe(), [hoverifier])
 
