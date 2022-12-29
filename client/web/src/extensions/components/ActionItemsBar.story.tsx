@@ -4,7 +4,7 @@ import { DecoratorFn, Meta } from '@storybook/react'
 import * as H from 'history'
 import { EMPTY, noop, of } from 'rxjs'
 
-import { ContributableMenu, Contributions, Evaluated } from '@sourcegraph/client-api'
+import { ContributableMenu, Contributions } from '@sourcegraph/client-api'
 import { FlatExtensionHostAPI } from '@sourcegraph/shared/src/api/contract'
 import { pretendProxySubscribable, pretendRemote } from '@sourcegraph/shared/src/api/util'
 import { NOOP_TELEMETRY_SERVICE } from '@sourcegraph/shared/src/telemetry/telemetryService'
@@ -35,7 +35,7 @@ if (!window.context) {
 
 // eslint-disable-next-line id-length
 const mockActionItems = [...(new Array(10) as (number | undefined)[])].map((_, index) => `${index}`)
-const mockContributions: Evaluated<Contributions> = {
+const mockContributions: Contributions = {
     actions: mockActionItems.map((id, index) => ({
         id,
         actionItem: {

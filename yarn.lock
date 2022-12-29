@@ -5507,12 +5507,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sourcegraph/template-parser@workspace:client/template-parser":
-  version: 0.0.0-use.local
-  resolution: "@sourcegraph/template-parser@workspace:client/template-parser"
-  languageName: unknown
-  linkType: soft
-
 "@sourcegraph/testing@workspace:client/testing":
   version: 0.0.0-use.local
   resolution: "@sourcegraph/testing@workspace:client/testing"

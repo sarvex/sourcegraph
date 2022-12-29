@@ -27,7 +27,6 @@ DIRS=(
   client/search-ui
   client/shared
   client/storybook
-  client/template-parser
   client/testing
   client/vscode
   client/web

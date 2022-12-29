@@ -838,9 +838,6 @@ importers:
   client/storybook:
     specifiers: {}
 
-  client/template-parser:
-    specifiers: {}
-
   client/testing:
     specifiers: {}
 

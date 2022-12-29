@@ -77,7 +77,6 @@ npm_translate_lock(
         "//:client/search-ui/package.json",
         "//:client/shared/package.json",
         "//:client/storybook/package.json",
-        "//:client/template-parser/package.json",
         "//:client/testing/package.json",
         "//:client/web/package.json",
         "//:client/wildcard/package.json",

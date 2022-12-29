@@ -20,7 +20,6 @@ import { ContributableMenu, TextDocumentPositionParameters } from '@sourcegraph/
 import { HoveredToken, LOADER_DELAY, MaybeLoadingResult, emitLoading } from '@sourcegraph/codeintellify'
 import { asError, ErrorLike, isErrorLike, isExternalLink, logger } from '@sourcegraph/common'
 import { Location } from '@sourcegraph/extension-api-types'
-import { Context } from '@sourcegraph/template-parser'
 
 import { ActionItemAction } from '../actions/ActionItem'
 import { wrapRemoteObservable } from '../api/client/api/common'
@@ -74,20 +73,17 @@ export function getHoverActions(
                 ),
         },
         hoverContext
-    ).pipe(switchMap(context => getHoverActionItems(context, extensionsController.extHostAPI)))
+    ).pipe(switchMap(() => getHoverActionItems(extensionsController.extHostAPI)))
 }
 
 /**
  * Gets active hover action items for the given context
  */
 export const getHoverActionItems = (
-    context: Context<TextDocumentPositionParameters>,
     extensionHostAPI: Promise<Remote<FlatExtensionHostAPI>>
 ): Observable<ActionItemAction[]> =>
     from(extensionHostAPI).pipe(
-        switchMap(extensionHostAPI =>
-            wrapRemoteObservable(extensionHostAPI.getContributions({ extraContext: context }))
-        ),
+        switchMap(extensionHostAPI => wrapRemoteObservable(extensionHostAPI.getContributions({}))),
         first(),
         map(contributions => getContributedActionItems(contributions, ContributableMenu.Hover))
     )
@@ -97,7 +93,7 @@ export const getHoverActionItems = (
  *
  * @internal
  */
-export interface HoverActionsContext extends Context<TextDocumentPositionParameters> {
+export interface HoverActionsContext {
     ['goToDefinition.showLoading']: boolean
     ['goToDefinition.url']: string | null
     ['goToDefinition.notFound']: boolean
@@ -126,7 +122,7 @@ export function getHoverActionsContext(
         platformContext: Pick<PlatformContext, 'urlToFile' | 'requestGraphQL'>
     },
     hoverContext: HoveredToken & HoverContext
-): Observable<Context<TextDocumentPositionParameters>> {
+): Observable<HoverActionsContext> {
     const parameters: TextDocumentPositionParameters & URLToFileContext = {
         textDocument: { uri: makeRepoURI(hoverContext) },
         position: { line: hoverContext.line - 1, character: hoverContext.character - 1 },
@@ -377,13 +373,9 @@ export function registerHoverContributions({
                         // goToDefinition.{error, loading, url} will all be falsey.)
                         {
                             action: 'goToDefinition',
-                            when: 'goToDefinition.error || goToDefinition.showLoading',
-                            disabledWhen: 'hoveredOnDefinition',
                         },
                         {
                             action: 'goToDefinition.preloaded',
-                            when: 'goToDefinition.url',
-                            disabledWhen: 'hoveredOnDefinition',
                         },
                     ],
                 },
@@ -467,8 +459,6 @@ export function registerHoverContributions({
                         // logic is implemented in the observable pipe that sets findReferences.url above.
                         {
                             action: 'findReferences',
-                            when: 'findReferences.url && (goToDefinition.showLoading || goToDefinition.url || goToDefinition.error)',
-                            disabledWhen: 'false',
                         },
                     ],
                 },
@@ -496,28 +486,11 @@ export function registerHoverContributions({
                     menus: {
                         hover: languageSpecs.map(spec => ({
                             action: 'findImplementations_' + spec.languageID,
-                            when:
-                                "resource.language == '" +
-                                spec.languageID +
-                                // eslint-disable-next-line no-template-curly-in-string
-                                "' && get(context, `implementations_${resource.language}`) && (goToDefinition.showLoading || goToDefinition.url || goToDefinition.error)",
                         })),
                     },
                 })
                 implementationsContributionPromise = promise
                 subscriptions.add(syncRemoteSubscription(promise))
-                for (const spec of languageSpecs) {
-                    if (spec.textDocumentImplemenationSupport) {
-                        extensionHostAPI
-                            .updateContext({
-                                [`implementations_${spec.languageID}`]: true,
-                            })
-                            .then(
-                                () => {},
-                                () => {}
-                            )
-                    }
-                }
             }
 
             return Promise.all([

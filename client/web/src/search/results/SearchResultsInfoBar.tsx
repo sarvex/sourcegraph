@@ -138,15 +138,6 @@ export const SearchResultsInfoBar: React.FunctionComponent<
         [props.enableCodeMonitoring, props.patternType, props.query]
     )
 
-    const extraContext = useMemo(
-        () => ({
-            searchQuery: props.query || null,
-            patternType: props.patternType,
-            caseSensitive: props.caseSensitive,
-        }),
-        [props.query, props.patternType, props.caseSensitive]
-    )
-
     // Show/hide mobile filters menu
     const [showMobileFilters, setShowMobileFilters] = useState(false)
     const onShowMobileFiltersClicked = (): void => {
@@ -189,7 +180,6 @@ export const SearchResultsInfoBar: React.FunctionComponent<
                         <ActionsContainer
                             {...props}
                             extensionsController={extensionsController}
-                            extraContext={extraContext}
                             menu={ContributableMenu.SearchResultsToolbar}
                         >
                             {actionItems => (

@@ -11,6 +11,5 @@
       "*": ["../common/src/types/*"],
     },
   },
-  "references": [{ "path": "../template-parser" }],
   "include": ["./src/**/*", "./*.ts"],
 }

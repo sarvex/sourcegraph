@@ -14,7 +14,6 @@
   "references": [
     { "path": "../common" },
     { "path": "../codeintellify" },
-    { "path": "../template-parser" },
     { "path": "../http-client" },
     { "path": "../client-api" },
     { "path": "../wildcard" },
