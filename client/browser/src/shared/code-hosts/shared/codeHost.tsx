@@ -23,7 +23,6 @@ import {
     concatAll,
     concatMap,
     filter,
-    finalize,
     map,
     mergeMap,
     observeOn,
@@ -57,7 +56,7 @@ import {
     LineOrPositionOrRange,
 } from '@sourcegraph/common'
 import { gql, isHTTPAuthError } from '@sourcegraph/http-client'
-import { ActionItemAction, urlForClientCommandOpen } from '@sourcegraph/shared/src/actions/ActionItem'
+import { ActionItemAction } from '@sourcegraph/shared/src/actions/ActionItem'
 import { wrapRemoteObservable } from '@sourcegraph/shared/src/api/client/api/common'
 import { isRepoNotFoundErrorLike } from '@sourcegraph/shared/src/backend/errors'
 import { Controller } from '@sourcegraph/shared/src/extensions/controller'
@@ -91,7 +90,7 @@ import { resolveRevision, retryWhenCloneInProgressError, resolvePrivateRepo } fr
 import { ConditionalTelemetryService, EventLogger } from '../../tracking/eventLogger'
 import { DEFAULT_SOURCEGRAPH_URL, getPlatformName, isDefaultSourcegraphUrl } from '../../util/context'
 import { MutationRecordLike, querySelectorOrSelf } from '../../util/dom'
-import { observeOptionFlag, observeSendTelemetry } from '../../util/optionFlags'
+import { observeSendTelemetry } from '../../util/optionFlags'
 import { bitbucketCloudCodeHost } from '../bitbucket-cloud/codeHost'
 import { bitbucketServerCodeHost } from '../bitbucket/codeHost'
 import { gerritCodeHost } from '../gerrit/codeHost'
@@ -419,59 +418,6 @@ function initCodeIntelligence({
                 hoverifier.hoverStateUpdates.subscribe(update => {
                     this.setState(update)
                 })
-            )
-            this.subscription.add(
-                hoverifier.hoverStateUpdates
-                    .pipe(
-                        withLatestFrom(observeOptionFlag('clickToGoToDefinition')),
-                        filter(([, clickToGoToDefinition]) => clickToGoToDefinition),
-                        map(([hoverState]) => hoverState),
-                        switchMap(({ hoveredTokenElement: token, hoverOverlayProps }) => {
-                            if (token === undefined) {
-                                return EMPTY
-                            }
-                            if (hoverOverlayProps === undefined) {
-                                return EMPTY
-                            }
-
-                            const { actionsOrError } = hoverOverlayProps
-                            const definitionAction =
-                                Array.isArray(actionsOrError) &&
-                                actionsOrError.find(a => a.action.id === 'goToDefinition.preloaded' && !a.disabledWhen)
-
-                            const referenceAction =
-                                Array.isArray(actionsOrError) &&
-                                actionsOrError.find(a => a.action.id === 'findReferences' && !a.disabledWhen)
-
-                            const action = definitionAction || referenceAction
-                            if (!action) {
-                                return EMPTY
-                            }
-
-                            const defer = urlForClientCommandOpen(action.action, window.location.hash)
-                            if (!defer) {
-                                return EMPTY
-                            }
-
-                            const oldCursor = token.style.cursor
-                            token.style.cursor = 'pointer'
-
-                            return fromEvent(token, 'click').pipe(
-                                tap(() => {
-                                    const selection = window.getSelection()
-                                    if (selection !== null && selection.toString() !== '') {
-                                        return
-                                    }
-
-                                    const actionType = action === definitionAction ? 'definition' : 'reference'
-                                    telemetryService.log(`${actionType}CodeHost.click`)
-                                    window.location.href = defer
-                                }),
-                                finalize(() => (token.style.cursor = oldCursor))
-                            )
-                        })
-                    )
-                    .subscribe()
             )
             if (codeHost.isLightTheme) {
                 this.subscription.add(

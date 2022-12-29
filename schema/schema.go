@@ -1864,8 +1864,6 @@ type Settings struct {
 	CodeIntelligenceAutoIndexPopularRepoLimit int `json:"codeIntelligence.autoIndexPopularRepoLimit,omitempty"`
 	// CodeIntelligenceAutoIndexRepositoryGroups description: A list of search.repositoryGroups that have auto-indexing enabled.
 	CodeIntelligenceAutoIndexRepositoryGroups []string `json:"codeIntelligence.autoIndexRepositoryGroups,omitempty"`
-	// CodeIntelligenceClickToGoToDefinition description: Enable click to go to definition.
-	CodeIntelligenceClickToGoToDefinition bool `json:"codeIntelligence.clickToGoToDefinition,omitempty"`
 	// ExperimentalFeatures description: Experimental features and settings.
 	ExperimentalFeatures *SettingsExperimentalFeatures `json:"experimentalFeatures,omitempty"`
 	// Extensions description: The Sourcegraph extensions to use. Enable an extension by adding a property `"my/extension": true` (where `my/extension` is the extension ID). Override a previously enabled extension and disable it by setting its value to `false`.
@@ -1973,7 +1971,6 @@ func (v *Settings) UnmarshalJSON(data []byte) error {
 	delete(m, "codeIntel.traceExtension")
 	delete(m, "codeIntelligence.autoIndexPopularRepoLimit")
 	delete(m, "codeIntelligence.autoIndexRepositoryGroups")
-	delete(m, "codeIntelligence.clickToGoToDefinition")
 	delete(m, "experimentalFeatures")
 	delete(m, "extensions")
 	delete(m, "extensions.activeLoggers")

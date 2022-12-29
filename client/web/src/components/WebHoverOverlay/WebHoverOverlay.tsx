@@ -1,13 +1,12 @@
 import React, { useEffect } from 'react'
 
 import classNames from 'classnames'
-import { fromEvent, Observable } from 'rxjs'
-import { finalize, tap } from 'rxjs/operators'
+import { Observable } from 'rxjs'
 
 import { isErrorLike } from '@sourcegraph/common'
 import { urlForClientCommandOpen } from '@sourcegraph/shared/src/actions/ActionItem'
 import { HoverOverlay, HoverOverlayProps } from '@sourcegraph/shared/src/hover/HoverOverlay'
-import { Settings, SettingsCascadeOrError, SettingsCascadeProps } from '@sourcegraph/shared/src/settings/settings'
+import { SettingsCascadeProps } from '@sourcegraph/shared/src/settings/settings'
 
 import { HoverThresholdProps } from '../../repo/RepoContainer'
 
@@ -42,62 +41,6 @@ export const WebHoverOverlay: React.FunctionComponent<React.PropsWithChildren<We
             onHoverShown?.()
         }
     }, [hoveredToken?.filePath, hoveredToken?.line, hoveredToken?.character, onHoverShown, hoverHasValue])
-
-    const clickToGoToDefinition = getClickToGoToDefinition(props.settingsCascade)
-
-    useEffect(() => {
-        if (!clickToGoToDefinition) {
-            return
-        }
-
-        const token = props.hoveredTokenElement
-        const click = props.hoveredTokenClick ?? (token ? fromEvent(token, 'click') : null)
-        const nav = props.nav
-        if (!click || !nav) {
-            return
-        }
-
-        const urlAndType = getGoToURL(props.actionsOrError, props.location)
-        if (!urlAndType) {
-            return
-        }
-        const { url, actionType } = urlAndType
-
-        const oldCursor = token?.style.cursor
-        if (token) {
-            token.style.cursor = 'pointer'
-        }
-
-        const subscription = click
-            .pipe(
-                tap(() => {
-                    const selection = window.getSelection()
-                    if (selection !== null && selection.toString() !== '') {
-                        return
-                    }
-
-                    props.telemetryService.log(`${actionType}HoverOverlay.click`)
-                    nav(url)
-                }),
-                finalize(() => {
-                    if (token && oldCursor) {
-                        token.style.cursor = oldCursor
-                    }
-                })
-            )
-            .subscribe()
-
-        return () => subscription.unsubscribe()
-    }, [
-        props.actionsOrError,
-        props.hoveredTokenElement,
-        props.hoveredTokenClick,
-        props.location,
-        props.nav,
-        props.telemetryService,
-        clickToGoToDefinition,
-        hoveredToken,
-    ])
 
     return (
         <HoverOverlay
@@ -143,12 +86,4 @@ export const getGoToURL = (
     }
 
     return { url, actionType: action === definitionAction ? 'definition' : 'reference' }
-}
-
-export const getClickToGoToDefinition = (settingsCascade: SettingsCascadeOrError<Settings>): boolean => {
-    if (settingsCascade.final && !isErrorLike(settingsCascade.final)) {
-        const value = settingsCascade.final['codeIntelligence.clickToGoToDefinition'] as boolean
-        return value ?? true
-    }
-    return true
 }

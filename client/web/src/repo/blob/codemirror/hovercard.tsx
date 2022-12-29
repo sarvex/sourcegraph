@@ -67,12 +67,7 @@ import {
 import { createUpdateableField } from '@sourcegraph/shared/src/components/CodeMirrorEditor'
 import { UIPositionSpec, UIRangeSpec } from '@sourcegraph/shared/src/util/url'
 
-import {
-    getClickToGoToDefinition,
-    getGoToURL,
-    WebHoverOverlay,
-    WebHoverOverlayProps,
-} from '../../../components/WebHoverOverlay'
+import { WebHoverOverlay, WebHoverOverlayProps } from '../../../components/WebHoverOverlay'
 import { BlobProps, updateBrowserHistoryIfChanged } from '../Blob'
 
 import { Container } from './react-interop'
@@ -777,27 +772,7 @@ function tokenRangeToHovercard(
                         // and reposition the hovercard if necessary
 
                         let providerOffset = hovercard?.providerOffset
-                        let onClick = hovercard?.onClick
-
-                        if (!onClick) {
-                            const props = view.state.facet(blobPropsFacet)
-                            // Adaption of the "click to go to definition" code inside
-                            // WebHoverOverlay
-                            if (getClickToGoToDefinition(props.settingsCascade)) {
-                                const urlAndType = getGoToURL(actionsOrError, props.location)
-                                if (urlAndType) {
-                                    const { url, actionType } = urlAndType
-                                    onClick = () => {
-                                        props.telemetryService.log(`${actionType}HoverOverlay.click`)
-                                        if (props.nav) {
-                                            props.nav(url)
-                                        } else {
-                                            props.history.push(url)
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        const onClick = hovercard?.onClick
 
                         if (!providerOffset) {
                             if (
