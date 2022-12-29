@@ -89,9 +89,6 @@ describe('StreamingSearchResults', () => {
             searchCaseSensitivity: false,
             searchQueryFromURL: 'r:golang/oauth2 test f:travis',
         })
-        window.context = {
-            enableLegacyExtensions: false,
-        } as any
     })
 
     it('should call streaming search API with the right parameters from URL', async () => {

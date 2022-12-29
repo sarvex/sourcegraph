@@ -8,7 +8,6 @@ import { ConfiguredExtension, extensionIDsFromSettings, isExtensionEnabled } fro
 import { areExtensionsSame } from '../../extensions/extensions'
 import { queryConfiguredRegistryExtensions } from '../../extensions/helpers'
 import { PlatformContext } from '../../platform/context'
-import { isSettingsValid } from '../../settings/settings'
 
 /**
  * @returns An observable that emits the list of extensions configured in the viewer's final settings upon
@@ -54,12 +53,8 @@ export const getEnabledExtensions = once(
         >
     ): Observable<ConfiguredExtension[]> =>
         combineLatest([viewerConfiguredExtensions(context), context.settings]).pipe(
-            map(([configuredExtensions, settings]) => {
-                const enableGoImportsSearchQueryTransform =
-                    isSettingsValid(settings) &&
-                    settings.final.experimentalFeatures?.enableGoImportsSearchQueryTransform
-
-                return configuredExtensions.filter(extension => {
+            map(([configuredExtensions, settings]) =>
+                configuredExtensions.filter(extension => {
                     const extensionsAsCoreFeatureMigratedExtension = MIGRATED_TO_CORE_WORKFLOW_EXTENSION_IDS.has(
                         extension.id
                     )
@@ -68,21 +63,9 @@ export const getEnabledExtensions = once(
                         return false
                     }
 
-                    // Go import search query transform is enabled by default but can be disabled by the setting
-                    const enableGoImportsSearchQueryTransformMigratedExtension =
-                        (enableGoImportsSearchQueryTransform === undefined || enableGoImportsSearchQueryTransform) &&
-                        extension.id === 'go-imports-search'
-                    // Ignore loading the go-imports-search extension when the migrated go imports search is enabled
-                    if (
-                        context.clientApplication === 'sourcegraph' &&
-                        enableGoImportsSearchQueryTransformMigratedExtension
-                    ) {
-                        return false
-                    }
-
                     return isExtensionEnabled(settings.final, extension.id)
                 })
-            }),
+            ),
             distinctUntilChanged((a, b) => areExtensionsSame(a, b)),
             publishReplay(1),
             refCount()
