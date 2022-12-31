@@ -11,7 +11,6 @@ import { FlatExtensionHostAPI, MainThreadAPI } from '../contract'
 import { proxySubscribable } from '../extension/api/common'
 
 import { ProxySubscription } from './api/common'
-import { getEnabledExtensions } from './enabledExtensions'
 import { updateSettings } from './services/settings'
 
 /** A registered command in the command registry. */
@@ -120,15 +119,13 @@ export const initMainThreadAPI = (
                         .getStaticExtensions()
                         .pipe(
                             switchMap(staticExtensions =>
-                                staticExtensions
-                                    ? of(staticExtensions).pipe(publishReplay(1), refCount())
-                                    : getEnabledExtensions(platformContext)
+                                staticExtensions ? of(staticExtensions).pipe(publishReplay(1), refCount()) : of([])
                             )
                         )
                 )
             }
 
-            return proxySubscribable(getEnabledExtensions(platformContext))
+            return proxySubscribable(of([]))
         },
         logEvent: (eventName, eventProperties) => platformContext.telemetryService?.log(eventName, eventProperties),
         logExtensionMessage: (...data) => logger.log(...data),

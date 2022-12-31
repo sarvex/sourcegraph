@@ -1,10 +1,5 @@
 import { PollyServer } from '@pollyjs/core'
 
-import type { ExtensionContext } from '../../codeintel/legacy-extensions/api'
-import { ExtensionManifest } from '../../extensions/extensionManifest'
-import { ExtensionsResult, SharedGraphQlOperations } from '../../graphql-operations'
-import { Settings } from '../../settings/settings'
-
 interface ExtensionMockingInit {
     /**
      * The polly server object, used to intercept extension bundle requests.
@@ -23,20 +18,6 @@ interface ExtensionMockingUtils {
      * and exports an `activate` function, just like any other Sourcegraph extension.
      */
     mockExtension: ({ id, bundle }: { id: string; bundle: () => void }) => void
-    /**
-     * Use this as the `Extension` override for `TestContext#overrideGraphQL`.
-     */
-    Extensions: SharedGraphQlOperations['Extensions']
-    /**
-     * Merge/replace your mock settings `extensions` property with this object.
-     */
-    extensionSettings: Settings['extensions']
-}
-
-interface ExtensionsResultMock {
-    extensionRegistry: ExtensionsResult['extensionRegistry'] & {
-        __typename: 'ExtensionRegistry'
-    }
 }
 
 /**
@@ -48,16 +29,6 @@ export function setupExtensionMocking({
 }: ExtensionMockingInit): ExtensionMockingUtils {
     let internalID = 0
 
-    const extensionSettings: Settings['extensions'] = {}
-    const extensionsResult: ExtensionsResultMock = {
-        extensionRegistry: {
-            __typename: 'ExtensionRegistry',
-            extensions: {
-                nodes: [],
-            },
-        },
-    }
-
     return {
         mockExtension: ({ id, bundle }) => {
             internalID++
@@ -68,29 +39,12 @@ export function setupExtensionMocking({
                 sourcegraphBaseUrl
             ).href
 
-            const extensionManifest: ExtensionManifest = {
-                url: bundleURL,
-                activationEvents: ['*'],
-            }
-
-            // Mutate mock data objects
-            extensionSettings[id] = true
-            extensionsResult.extensionRegistry.extensions.nodes.push({
-                id,
-                extensionID: id,
-                manifest: {
-                    jsonFields: extensionManifest,
-                },
-            })
-
             pollyServer.get(bundleURL).intercept((request, response) => {
                 // Create an immediately-invoked function expression for the extensionBundle function
                 const extensionBundleString = `(${bundle.toString()})()`
                 response.type('application/javascript; charset=utf-8').send(extensionBundleString)
             })
         },
-        Extensions: () => extensionsResult,
-        extensionSettings,
     }
 }
 

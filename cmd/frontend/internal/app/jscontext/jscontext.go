@@ -113,8 +113,6 @@ type JSContext struct {
 
 	ExperimentalFeatures schema.ExperimentalFeatures `json:"experimentalFeatures"`
 
-	EnableLegacyExtensions bool `json:"enableLegacyExtensions"`
-
 	LicenseInfo *hooks.LicenseInfo `json:"licenseInfo"`
 
 	OutboundRequestLogLimit int `json:"outboundRequestLogLimit"`
@@ -248,8 +246,6 @@ func NewJSContextFromRequest(req *http.Request, db database.DB) JSContext {
 		ProductResearchPageEnabled: conf.ProductResearchPageEnabled(),
 
 		ExperimentalFeatures: conf.ExperimentalFeatures(),
-
-		EnableLegacyExtensions: conf.ExperimentalFeatures().EnableLegacyExtensions,
 
 		LicenseInfo: licenseInfo,
 

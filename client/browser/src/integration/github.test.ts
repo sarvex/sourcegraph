@@ -102,11 +102,6 @@ describe('GitHub', () => {
                     siteAdmin: false,
                 },
             }),
-            EnableLegacyExtensions: () => ({
-                site: {
-                    enableLegacyExtensions: true,
-                },
-            }),
         })
 
         // Ensure that the same assets are requested in all environments.
@@ -155,7 +150,7 @@ describe('GitHub', () => {
     // it('shows hover tooltips when hovering a token and respects "Enable single click to go to definition" setting', async () => {
     //     mockUrls(['https://github.com/*path/find-definition'])
 
-    //     const { mockExtension, Extensions, extensionSettings } = setupExtensionMocking({
+    //     const { mockExtension } = setupExtensionMocking({
     //         pollyServer: testContext.server,
     //         sourcegraphBaseUrl: driver.sourcegraphBaseUrl,
     //     })
@@ -322,14 +317,12 @@ describe('GitHub', () => {
             beforeEach(() => {
                 mockUrls(['https://github.com/*path/find-definition'])
 
-                const { mockExtension, Extensions, extensionSettings } = setupExtensionMocking({
+                const { mockExtension } = setupExtensionMocking({
                     pollyServer: testContext.server,
                     sourcegraphBaseUrl: driver.sourcegraphBaseUrl,
                 })
 
-                const userSettings: Settings = {
-                    extensions: extensionSettings,
-                }
+                const userSettings: Settings = {}
                 testContext.overrideGraphQL({
                     ViewerConfiguration: () => ({
                         viewerConfiguration: {
@@ -350,7 +343,6 @@ describe('GitHub', () => {
                             merged: { contents: JSON.stringify(userSettings), messages: [] },
                         },
                     }),
-                    Extensions,
                     ResolveRev: ({ revision }) => ({
                         repository: {
                             mirrorInfo: { cloned: true },
@@ -647,14 +639,12 @@ describe('GitHub', () => {
                     'https://github.com/commits/badges',
                 ])
 
-                const { mockExtension, Extensions, extensionSettings } = setupExtensionMocking({
+                const { mockExtension } = setupExtensionMocking({
                     pollyServer: testContext.server,
                     sourcegraphBaseUrl: driver.sourcegraphBaseUrl,
                 })
 
-                const userSettings: Settings = {
-                    extensions: extensionSettings,
-                }
+                const userSettings: Settings = {}
                 testContext.overrideGraphQL({
                     ViewerConfiguration: () => ({
                         viewerConfiguration: {
@@ -691,7 +681,6 @@ describe('GitHub', () => {
                             },
                         },
                     }),
-                    Extensions,
                 })
 
                 // Serve a mock extension with a simple hover provider

@@ -279,7 +279,6 @@ var allowedPrometheusFieldNames = map[[2]string]struct{}{
 	{"Query", "user"}:                           {},
 	{"Query", "viewerConfiguration"}:            {},
 	{"Query", "viewerSettings"}:                 {},
-	{"RegistryExtensionConnection", "nodes"}:    {},
 	{"Repository", "cloneInProgress"}:           {},
 	{"Repository", "commit"}:                    {},
 	{"Repository", "comparison"}:                {},
@@ -606,9 +605,6 @@ func newSchemaResolver(db database.DB, gitserverClient gitserver.Client) *schema
 		},
 		"GitCommit": func(ctx context.Context, id graphql.ID) (Node, error) {
 			return r.gitCommitByID(ctx, id)
-		},
-		"RegistryExtension": func(ctx context.Context, id graphql.ID) (Node, error) {
-			return RegistryExtensionByID(ctx, db, id)
 		},
 		"SavedSearch": func(ctx context.Context, id graphql.ID) (Node, error) {
 			return r.savedSearchByID(ctx, id)

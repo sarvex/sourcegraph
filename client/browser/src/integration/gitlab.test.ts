@@ -91,11 +91,6 @@ describe('GitLab', () => {
                     hasCodeIntelligence: true,
                 },
             }),
-            EnableLegacyExtensions: () => ({
-                site: {
-                    enableLegacyExtensions: true,
-                },
-            }),
         })
 
         // Ensure that the same assets are requested in all environments.
@@ -147,14 +142,12 @@ describe('GitLab', () => {
     })
 
     it('shows hover tooltips when hovering a token', async () => {
-        const { mockExtension, Extensions, extensionSettings } = setupExtensionMocking({
+        const { mockExtension } = setupExtensionMocking({
             pollyServer: testContext.server,
             sourcegraphBaseUrl: driver.sourcegraphBaseUrl,
         })
 
-        const userSettings: Settings = {
-            extensions: extensionSettings,
-        }
+        const userSettings: Settings = {}
         testContext.overrideGraphQL({
             ViewerConfiguration: () => ({
                 viewerConfiguration: {
@@ -175,7 +168,6 @@ describe('GitLab', () => {
                     merged: { contents: JSON.stringify(userSettings), messages: [] },
                 },
             }),
-            Extensions,
         })
 
         // Serve a mock extension with a simple hover provider

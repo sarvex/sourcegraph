@@ -287,11 +287,7 @@ describe('CodeMirror blob view', () => {
 
         describe('hovercards', () => {
             beforeEach(() => {
-                const {
-                    graphqlResults: extensionGraphQlResult,
-                    intercept,
-                    userSettings,
-                } = createExtensionData([
+                const { intercept, userSettings } = createExtensionData([
                     {
                         id: 'test',
                         extensionID: 'test/test',
@@ -333,7 +329,6 @@ describe('CodeMirror blob view', () => {
                             },
                         },
                     }),
-                    ...extensionGraphQlResult,
                 })
 
                 // Serve a mock extension bundle with a simple hover provider
@@ -588,7 +583,6 @@ interface MockExtension {
 
 function createExtensionData(extensions: MockExtension[]): {
     intercept: (testContext: WebIntegrationTestContext, driver: Driver) => void
-    graphqlResults: Pick<SharedGraphQlOperations, 'Extensions'>
     userSettings: Required<Pick<Settings, 'extensions'>>
 } {
     return {
@@ -602,19 +596,6 @@ function createExtensionData(extensions: MockExtension[]): {
                         response.type('application/javascript; charset=utf-8').send(extensionBundleString)
                     })
             }
-        },
-        graphqlResults: {
-            Extensions: () => ({
-                extensionRegistry: {
-                    __typename: 'ExtensionRegistry',
-                    extensions: {
-                        nodes: extensions.map(extension => ({
-                            ...extension,
-                            manifest: { jsonFields: extension.extensionManifest },
-                        })),
-                    },
-                },
-            }),
         },
         userSettings: {
             extensions: extensions.reduce((extensionsSettings: Record<string, boolean>, mockExtension) => {

@@ -222,22 +222,6 @@ describe('Blob viewer', () => {
                         },
                     },
                 }),
-                Extensions: () => ({
-                    extensionRegistry: {
-                        __typename: 'ExtensionRegistry',
-                        extensions: {
-                            nodes: [
-                                {
-                                    id: 'test',
-                                    extensionID: 'test/test',
-                                    manifest: {
-                                        jsonFields: extensionManifest,
-                                    },
-                                },
-                            ],
-                        },
-                    },
-                }),
             })
 
             // Serve a mock extension bundle with a simple hover provider
@@ -326,22 +310,6 @@ describe('Blob viewer', () => {
                                 settingsURL: '/users/test/settings',
                             },
                         ],
-                    },
-                }),
-                Extensions: () => ({
-                    extensionRegistry: {
-                        __typename: 'ExtensionRegistry',
-                        extensions: {
-                            nodes: [
-                                {
-                                    id: 'test',
-                                    extensionID: 'test/references',
-                                    manifest: {
-                                        jsonFields: extensionManifest,
-                                    },
-                                },
-                            ],
-                        },
                     },
                 }),
                 Blob: ({ filePath }) => ({

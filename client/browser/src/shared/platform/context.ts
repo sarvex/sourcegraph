@@ -57,7 +57,7 @@ export function createPlatformContext(
     }>(1)
     const { requestGraphQL, getBrowserGraphQLClient } = createGraphQLHelpers(sourcegraphURL, isExtension)
 
-    const shouldUseInlineExtensionsObservable = shouldUseInlineExtensions(requestGraphQL)
+    const shouldUseInlineExtensionsObservable = shouldUseInlineExtensions()
 
     const context: BrowserPlatformContext = {
         /**
