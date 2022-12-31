@@ -3,7 +3,6 @@ import { BehaviorSubject, combineLatest, from, Observable, Subscription } from '
 import { catchError, concatMap, distinctUntilChanged, first, map, switchMap, tap } from 'rxjs/operators'
 import sourcegraph from 'sourcegraph'
 
-import { Contributions } from '@sourcegraph/client-api'
 import { asError, ErrorLike, isErrorLike, hashCode, memoizeObservable, logger } from '@sourcegraph/common'
 
 import { ConfiguredExtension, getScriptURLFromExtensionManifest, splitExtensionID } from '../../extensions/extension'
@@ -60,7 +59,7 @@ export function observeActiveExtensions(
 const DEPRECATED_EXTENSION_IDS = new Set(['sourcegraph/code-stats-insights', 'sourcegraph/search-insights'])
 
 export function activateExtensions(
-    state: Pick<ExtensionHostState, 'activeExtensions' | 'contributions' | 'haveInitialExtensionsLoaded' | 'settings'>,
+    state: Pick<ExtensionHostState, 'activeExtensions' | 'haveInitialExtensionsLoaded' | 'settings'>,
     mainAPI: Remote<Pick<MainThreadAPI, 'getScriptURLForExtension' | 'logEvent'>>,
     createExtensionAPI: (extensionID: string) => typeof sourcegraph,
     mainThreadAPIInitializations: Observable<boolean>,
@@ -95,8 +94,6 @@ export function activateExtensions(
     )
 
     const previouslyActivatedExtensions = new Set<string>()
-    const extensionContributions = new Map<string, Contributions>()
-    const contributionsToAdd = new Map<string, Contributions>()
     const extensionsSubscription = combineLatest([state.activeExtensions, getScriptURLs(null)])
         .pipe(
             concatMap(([activeExtensions, getScriptURLs]) => {
@@ -151,19 +148,6 @@ export function activateExtensions(
                         return { toActivate: executableExtensionsToActivate, toDeactivate }
                     })
                 ).pipe(
-                    tap(({ toActivate }) => {
-                        for (const extension of toActivate) {
-                            if (
-                                extension.manifest &&
-                                !isErrorLike(extension.manifest) &&
-                                extension.manifest.contributes
-                            ) {
-                                extensionContributions.set(extension.id, extension.manifest.contributes)
-                                // Extension contributions additions and removals are batched
-                                contributionsToAdd.set(extension.id, extension.manifest.contributes)
-                            }
-                        }
-                    }),
                     map(({ toActivate, toDeactivate }) => {
                         // We could log the event after the activation promise resolves to ensure that there wasn't
                         // an error during activation, but we want to track the maximum number of times an extension could have been useful.
@@ -218,26 +202,12 @@ export function activateExtensions(
             })
         )
         .subscribe(({ activated, deactivated }) => {
-            const contributionsToRemove = [...deactivated].map(id => extensionContributions.get(id)).filter(Boolean)
-
             for (const id of deactivated) {
                 previouslyActivatedExtensions.delete(id)
-                extensionContributions.delete(id)
             }
 
             for (const [id] of activated) {
                 previouslyActivatedExtensions.add(id)
-            }
-
-            if (contributionsToAdd.size > 0) {
-                state.contributions.next([...state.contributions.value, ...contributionsToAdd.values()])
-                contributionsToAdd.clear()
-            }
-
-            if (contributionsToRemove.length > 0) {
-                state.contributions.next(
-                    state.contributions.value.filter(contributions => !contributionsToRemove.includes(contributions))
-                )
             }
 
             if (state.haveInitialExtensionsLoaded.value === false) {

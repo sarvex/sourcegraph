@@ -126,15 +126,6 @@ $default-icon-colors: --oc-grape-7, --oc-violet-7, --oc-cyan-9, --oc-indigo-7, -
 .icon {
     height: 1rem !important;
     width: 1rem !important;
-
-    /* Default icon background color */
-    @for $i from 1 through length($default-icon-colors) {
-        &-#{$i} {
-            &::after {
-                background-color: var(nth($default-icon-colors, $i));
-            }
-        }
-    }
 }
 
 /* e.g. "close extensions panel", "add extensions" */

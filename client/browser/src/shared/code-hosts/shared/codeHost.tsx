@@ -553,7 +553,6 @@ export interface HandleCodeHostOptions extends CodeIntelligenceProps {
     mutations: Observable<MutationRecordLike[]>
     render: Renderer
     minimalUI: boolean
-    hideActions?: boolean
     background: Pick<BackgroundPageApi, 'notifyRepoSyncError' | 'openOptionsPage'>
 }
 
@@ -693,10 +692,8 @@ export async function handleCodeHost({
     telemetryService,
     render,
     minimalUI,
-    hideActions,
     background,
 }: HandleCodeHostOptions): Promise<Subscription> {
-    const history = H.createBrowserHistory()
     const subscriptions = new Subscription()
     const { requestGraphQL, sourcegraphURL } = platformContext
 
@@ -1038,7 +1035,6 @@ export async function handleCodeHost({
                             codeViewEvent.toolbarButtonProps?.actionItemClass ??
                             codeHost.codeViewToolbarClassProps?.actionItemClass
                         }
-                        hideActions={hideActions}
                         fileInfoOrError={diffOrBlobInfo}
                         sourcegraphURL={sourcegraphURL}
                         telemetryService={telemetryService}
@@ -1173,8 +1169,6 @@ export function injectCodeIntelligenceToCodeHost(
     const minimalUIStorageFlag = localStorage.getItem('sourcegraphMinimalUI')
     const minimalUI =
         minimalUIStorageFlag !== null ? minimalUIStorageFlag === 'true' : codeHost.type === 'gitlab' && !isExtension
-    // Flag to hide the actions in the code view toolbar (hide ActionNavItems) leaving only the "Open on Sourcegraph" button in the toolbar.
-    const hideActions = codeHost.type === 'gerrit'
 
     const renderWithThemeProvider = (element: React.ReactNode, container: Element | null): void => {
         if (!container) {
@@ -1203,7 +1197,6 @@ export function injectCodeIntelligenceToCodeHost(
                     telemetryService,
                     render: renderWithThemeProvider as Renderer,
                     minimalUI,
-                    hideActions,
                     background,
                 })
                 subscriptions.add(codeHostSubscription)

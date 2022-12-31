@@ -9,7 +9,6 @@ import { asError } from '@sourcegraph/common'
 import { limitHit, StreamingProgress, StreamingSearchResultsList } from '@sourcegraph/search-ui'
 import { FetchFileParameters } from '@sourcegraph/shared/src/backend/file'
 import { FilePrefetcher } from '@sourcegraph/shared/src/components/PrefetchableFile'
-import { ExtensionsControllerProps } from '@sourcegraph/shared/src/extensions/controller'
 import { SearchPatternType } from '@sourcegraph/shared/src/graphql-operations'
 import { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
 import { QueryUpdate, SearchContextProps } from '@sourcegraph/shared/src/search'
@@ -50,7 +49,6 @@ export interface StreamingSearchResultsProps
     extends SearchStreamingProps,
         Pick<SearchContextProps, 'selectedSearchContextSpec' | 'searchContextsEnabled'>,
         SettingsCascadeProps,
-        ExtensionsControllerProps<'executeCommand' | 'extHostAPI'>,
         PlatformContextProps<'settings' | 'requestGraphQL' | 'sourcegraphURL'>,
         TelemetryProps,
         ThemeProps,

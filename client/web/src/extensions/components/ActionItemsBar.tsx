@@ -1,28 +1,22 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { mdiChevronDoubleDown, mdiChevronDoubleUp, mdiMenuDown, mdiMenuUp, mdiPuzzleOutline } from '@mdi/js'
+import { mdiChevronDoubleDown, mdiChevronDoubleUp, mdiPuzzleOutline } from '@mdi/js'
 import VisuallyHidden from '@reach/visually-hidden'
 import classNames from 'classnames'
 import * as H from 'history'
 import { head, last } from 'lodash'
-import { BehaviorSubject, from, of } from 'rxjs'
+import { BehaviorSubject, from } from 'rxjs'
 import { distinctUntilChanged, map } from 'rxjs/operators'
 import { focusable, FocusableElement } from 'tabbable'
 import { Key } from 'ts-key-enum'
 
-import { ContributableMenu } from '@sourcegraph/client-api'
 import { LocalStorageSubject } from '@sourcegraph/common'
-import { ActionItem } from '@sourcegraph/shared/src/actions/ActionItem'
-import { ActionsContainer } from '@sourcegraph/shared/src/actions/ActionsContainer'
-import { haveInitialExtensionsLoaded } from '@sourcegraph/shared/src/api/features'
-import { ExtensionsControllerProps } from '@sourcegraph/shared/src/extensions/controller'
 import { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
 import { isSettingsValid } from '@sourcegraph/shared/src/settings/settings'
 import { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
-import { Button, ButtonLink, Icon, LoadingSpinner, Tooltip, useObservable } from '@sourcegraph/wildcard'
+import { ButtonLink, Icon, Tooltip, useObservable } from '@sourcegraph/wildcard'
 
 import { ErrorBoundary } from '../../components/ErrorBoundary'
-import { useCarousel } from '../../components/useCarousel'
 import { RepositoryFields } from '../../graphql-operations'
 import { OpenInEditorActionItem } from '../../open-in-editor/OpenInEditorActionItem'
 import { GoToCodeHostAction } from '../../repo/actions/GoToCodeHostAction'
@@ -33,10 +27,6 @@ import { parseBrowserRepoURL } from '../../util/url'
 import styles from './ActionItemsBar.module.scss'
 
 const scrollButtonClassName = styles.scroll
-
-function getIconClassName(index: number): string | undefined {
-    return (styles as Record<string, string>)[`icon${index % 5}`]
-}
 
 function arrowable(element: HTMLElement): FocusableElement[] {
     return focusable(element).filter(
@@ -177,7 +167,7 @@ export function useWebActionItems(): Pick<ActionItemsBarProps, 'useActionItemsBa
     }
 }
 
-export interface ActionItemsBarProps extends ExtensionsControllerProps, TelemetryProps, PlatformContextProps {
+export interface ActionItemsBarProps extends TelemetryProps, PlatformContextProps {
     repo?: RepositoryFields
     useActionItemsBar: () => { isOpen: boolean | undefined; barReference: React.RefCallback<HTMLElement> }
     location: H.Location
@@ -193,21 +183,10 @@ const actionItemClassName = classNames(
  * Renders extensions (both migrated to the core workflow and legacy) actions items in the sidebar.
  */
 export const ActionItemsBar = React.memo<ActionItemsBarProps>(function ActionItemsBar(props) {
-    const { extensionsController, location, source } = props
+    const { location, source } = props
     const { isOpen, barReference } = props.useActionItemsBar()
     const { repoName, rawRevision, filePath, commitRange, position, range } = parseBrowserRepoURL(
         location.pathname + location.search + location.hash
-    )
-
-    const { carouselReference, canScrollNegative, canScrollPositive, onNegativeClicked, onPositiveClicked } =
-        useCarousel({ direction: 'topToBottom' })
-
-    const haveExtensionsLoaded = useObservable(
-        useMemo(
-            () =>
-                extensionsController !== null ? haveInitialExtensionsLoaded(extensionsController.extHostAPI) : of(true),
-            [extensionsController]
-        )
     )
 
     const settingsOrError = useObservable(
@@ -227,17 +206,6 @@ export const ActionItemsBar = React.memo<ActionItemsBarProps>(function ActionIte
             {/* To be clear to users that this isn't an error reported by extensions about e.g. the code they're viewing. */}
             <ErrorBoundary location={props.location} render={error => <span>Component error: {error.message}</span>}>
                 <ActionItemsDivider />
-                {canScrollNegative && (
-                    <Button
-                        className={classNames('p-0 border-0', styles.scroll, styles.listItem)}
-                        onClick={onNegativeClicked}
-                        tabIndex={-1}
-                        variant="link"
-                        aria-label="Scroll up"
-                    >
-                        <Icon aria-hidden={true} svgPath={mdiMenuUp} />
-                    </Button>
-                )}
 
                 {source !== 'compare' && source !== 'commit' && (
                     <GoToCodeHostAction
@@ -267,79 +235,12 @@ export const ActionItemsBar = React.memo<ActionItemsBarProps>(function ActionIte
                         )}
                     </>
                 )}
-
-                {extensionsController !== null ? (
-                    <ActionsContainer
-                        menu={ContributableMenu.EditorTitle}
-                        returnInactiveMenuItems={true}
-                        extensionsController={extensionsController}
-                        empty={null}
-                        location={props.location}
-                        platformContext={props.platformContext}
-                        telemetryService={props.telemetryService}
-                    >
-                        {items => (
-                            <ul className={classNames('list-unstyled m-0', styles.list)} ref={carouselReference}>
-                                {items.map((item, index) => {
-                                    const hasIconURL = !!item.action.actionItem?.iconURL
-                                    const className = classNames(
-                                        actionItemClassName,
-                                        !hasIconURL &&
-                                            classNames(styles.actionNoIcon, getIconClassName(index), 'text-sm')
-                                    )
-                                    const inactiveClassName = classNames(
-                                        styles.actionInactive,
-                                        !hasIconURL && styles.actionNoIconInactive
-                                    )
-                                    const listItemClassName = classNames(
-                                        styles.listItem,
-                                        index !== items.length - 1 && 'mb-1'
-                                    )
-
-                                    const dataContent = !hasIconURL ? item.action.category?.slice(0, 1) : undefined
-
-                                    return (
-                                        <li key={item.action.id} className={listItemClassName}>
-                                            <ActionItem
-                                                {...props}
-                                                {...item}
-                                                extensionsController={extensionsController}
-                                                className={className}
-                                                dataContent={dataContent}
-                                                variant="actionItem"
-                                                iconClassName={styles.icon}
-                                                pressedClassName={styles.actionPressed}
-                                                inactiveClassName={inactiveClassName}
-                                                hideLabel={true}
-                                                tabIndex={-1}
-                                                hideExternalLinkIcon={true}
-                                                disabledDuringExecution={true}
-                                            />
-                                        </li>
-                                    )
-                                })}
-                            </ul>
-                        )}
-                    </ActionsContainer>
-                ) : null}
-                {canScrollPositive && (
-                    <Button
-                        className={classNames('p-0 border-0', styles.scroll, styles.listItem)}
-                        onClick={onPositiveClicked}
-                        tabIndex={-1}
-                        variant="link"
-                        aria-label="Scroll down"
-                    >
-                        <Icon aria-hidden={true} svgPath={mdiMenuDown} />
-                    </Button>
-                )}
-                {haveExtensionsLoaded && <ActionItemsDivider />}
             </ErrorBoundary>
         </div>
     )
 })
 
-export interface ActionItemsToggleProps extends ExtensionsControllerProps<'extHostAPI'> {
+export interface ActionItemsToggleProps {
     useActionItemsToggle: () => {
         isOpen: boolean | undefined
         toggle: () => void
@@ -351,40 +252,27 @@ export interface ActionItemsToggleProps extends ExtensionsControllerProps<'extHo
 
 export const ActionItemsToggle: React.FunctionComponent<React.PropsWithChildren<ActionItemsToggleProps>> = ({
     useActionItemsToggle,
-    extensionsController,
     className,
 }) => {
-    const panelName = extensionsController !== null && window.context.enableLegacyExtensions ? 'extensions' : 'actions'
-
     const { isOpen, toggle, toggleReference, barInPage } = useActionItemsToggle()
-
-    const haveExtensionsLoaded = useObservable(
-        useMemo(
-            () =>
-                extensionsController !== null ? haveInitialExtensionsLoaded(extensionsController.extHostAPI) : of(true),
-            [extensionsController]
-        )
-    )
 
     return barInPage ? (
         <>
             <li className={styles.dividerVertical} />
             <li className={classNames('nav-item mr-2', className)}>
                 <div className={classNames(styles.toggleContainer, isOpen && styles.toggleContainerOpen)}>
-                    <Tooltip content={`${isOpen ? 'Close' : 'Open'} ${panelName} panel`}>
+                    <Tooltip content={`${isOpen ? 'Close' : 'Open'} actions panel`}>
                         <ButtonLink
                             aria-label={
                                 isOpen
-                                    ? `Close ${panelName} panel. Press the down arrow key to enter the ${panelName} panel.`
-                                    : `Open ${panelName} panel`
+                                    ? 'Close actions panel. Press the down arrow key to enter the actions panel.'
+                                    : 'Open actions panel'
                             }
                             className={classNames(actionItemClassName, styles.auxIcon, styles.actionToggle)}
                             onSelect={toggle}
                             ref={toggleReference}
                         >
-                            {!haveExtensionsLoaded ? (
-                                <LoadingSpinner />
-                            ) : isOpen ? (
+                            {isOpen ? (
                                 <Icon
                                     data-testid="action-items-toggle-open"
                                     aria-hidden={true}
@@ -398,7 +286,7 @@ export const ActionItemsToggle: React.FunctionComponent<React.PropsWithChildren<
                                     }
                                 />
                             )}
-                            {haveExtensionsLoaded && <VisuallyHidden>Down arrow to enter</VisuallyHidden>}
+                            <VisuallyHidden>Down arrow to enter</VisuallyHidden>
                         </ButtonLink>
                     </Tooltip>
                 </div>

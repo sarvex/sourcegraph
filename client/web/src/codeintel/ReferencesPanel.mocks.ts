@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 import { MockedResponse } from '@apollo/client/testing'
-import { EMPTY, NEVER, noop, of, Subscription } from 'rxjs'
+import { noop, of, Subscription } from 'rxjs'
 
 import { logger } from '@sourcegraph/common'
 import { getDocumentNode, dataOrThrowErrors, useQuery } from '@sourcegraph/http-client'
@@ -324,8 +324,6 @@ const NOOP_EXTENSIONS_CONTROLLER: Controller = {
     registerCommand: () => new Subscription(),
     extHostAPI: Promise.resolve(
         pretendRemote<FlatExtensionHostAPI>({
-            getContributions: () => pretendProxySubscribable(NEVER),
-            registerContributions: () => pretendProxySubscribable(EMPTY).subscribe(noop as never),
             haveInitialExtensionsLoaded: () => pretendProxySubscribable(of(true)),
             addTextDocumentIfNotExists: () => {},
             addViewerIfNotExists: (): ViewerId => ({ viewerId: 'MOCK_VIEWER_ID' }),
