@@ -163,7 +163,6 @@ const createProps = (path: string, forceWrap: boolean = false): React.ComponentP
     settingsCascade: EMPTY_SETTINGS_CASCADE,
     authenticatedUser: mockUser,
     platformContext: {} as any,
-    extensionsController: null,
     telemetryService: NOOP_TELEMETRY_SERVICE,
     forceWrap,
 })

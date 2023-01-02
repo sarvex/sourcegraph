@@ -254,7 +254,6 @@ export const RepoHeader: React.FunctionComponent<React.PropsWithChildren<Props>>
                 <ul className="navbar-nav">
                     <ActionItemsToggle
                         useActionItemsToggle={props.useActionItemsToggle}
-                        extensionsController={props.extensionsController}
                     />
                 </ul>
             </ErrorBoundary>

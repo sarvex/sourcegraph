@@ -123,7 +123,6 @@
     "@slack/web-api": "^5.15.0",
     "@sourcegraph/eslint-config": "0.32.0",
     "@sourcegraph/eslint-plugin-sourcegraph": "^1.0.5",
-    "@sourcegraph/extension-api-stubs": "^1.6.1",
     "@sourcegraph/prettierrc": "^3.0.3",
     "@sourcegraph/stylelint-config": "^1.4.0",
     "@sourcegraph/stylelint-plugin-sourcegraph": "^1.0.1",
@@ -333,7 +332,6 @@
     "webpack-manifest-plugin": "^5.0.0",
     "webpack-stats-plugin": "^1.1.1",
     "wildcard-mock-link": "^2.0.1",
-    "worker-loader": "^3.0.8",
     "yauzl": "^2.10.0"
   },
   "dependencies": {
@@ -419,7 +417,6 @@
     "https-browserify": "^1.0.0",
     "https-proxy-agent": "^5.0.1",
     "is-absolute-url": "^3.0.3",
-    "iterare": "^1.2.1",
     "js-base64": "^3.7.2",
     "js-cookie": "^2.2.1",
     "js-yaml": "^4.1.0",
@@ -460,7 +457,6 @@
     "rxjs": "^6.6.3",
     "sanitize-html": "^2.0.0",
     "semver": "^7.3.2",
-    "sourcegraph": "workspace:*",
     "stream-http": "^3.2.0",
     "string-score": "^1.0.1",
     "tabbable": "^5.1.5",

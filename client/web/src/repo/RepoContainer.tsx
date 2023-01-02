@@ -13,7 +13,6 @@ import { asError, encodeURIPathComponent, ErrorLike, isErrorLike, logger, repeat
 import { StreamingSearchResultsListProps } from '@sourcegraph/search-ui'
 import { isCloneInProgressErrorLike, isRepoSeeOtherErrorLike } from '@sourcegraph/shared/src/backend/errors'
 import { displayRepoName } from '@sourcegraph/shared/src/components/RepoLink'
-import { ExtensionsControllerProps } from '@sourcegraph/shared/src/extensions/controller'
 import { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
 import { Settings } from '@sourcegraph/shared/src/schema/settings.schema'
 import { SearchContextProps } from '@sourcegraph/shared/src/search'
@@ -63,7 +62,6 @@ import styles from './RepoContainer.module.scss'
 export interface RepoContainerContext
     extends RepoHeaderContributionsLifecycleProps,
         SettingsCascadeProps,
-        ExtensionsControllerProps,
         PlatformContextProps,
         ThemeProps,
         HoverThresholdProps,
@@ -107,7 +105,6 @@ interface RepoContainerProps
         SettingsCascadeProps<Settings>,
         PlatformContextProps,
         TelemetryProps,
-        ExtensionsControllerProps,
         ThemeProps,
         Pick<SearchContextProps, 'selectedSearchContextSpec' | 'searchContextsEnabled'>,
         BreadcrumbSetters,
@@ -141,7 +138,7 @@ export interface HoverThresholdProps {
  * Renders a horizontal bar and content for a repository page.
  */
 export const RepoContainer: React.FunctionComponent<React.PropsWithChildren<RepoContainerProps>> = props => {
-    const { extensionsController, globbing } = props
+    const { globbing } = props
 
     const { repoName, revision, rawRevision, filePath, commitRange, position, range } = parseBrowserRepoURL(
         location.pathname + location.search + location.hash
@@ -224,41 +221,6 @@ export const RepoContainer: React.FunctionComponent<React.PropsWithChildren<Repo
             }
         }, [resolvedRevisionOrError, repoOrError, repoName])
     )
-
-    // Update the workspace roots service to reflect the current repo / resolved revision
-    useEffect(() => {
-        const workspaceRootUri =
-            resolvedRevisionOrError &&
-            !isErrorLike(resolvedRevisionOrError) &&
-            makeRepoURI({
-                repoName,
-                revision: resolvedRevisionOrError.commitID,
-            })
-
-        if (workspaceRootUri && extensionsController !== null) {
-            extensionsController.extHostAPI
-                .then(extensionHostAPI =>
-                    extensionHostAPI.addWorkspaceRoot({
-                        uri: workspaceRootUri,
-                        inputRevision: revision || '',
-                    })
-                )
-                .catch(error => {
-                    logger.error('Error adding workspace root', error)
-                })
-        }
-
-        // Clear the Sourcegraph extensions model's roots when navigating away.
-        return () => {
-            if (workspaceRootUri && extensionsController !== null) {
-                extensionsController.extHostAPI
-                    .then(extensionHostAPI => extensionHostAPI.removeWorkspaceRoot(workspaceRootUri))
-                    .catch(error => {
-                        logger.error('Error removing workspace root', error)
-                    })
-            }
-        }
-    }, [extensionsController, repoName, resolvedRevisionOrError, revision])
 
     // Update the navbar query to reflect the current repo / revision
     const onNavbarQueryChange = useNavbarQueryState(state => state.setQueryState)
@@ -370,7 +332,6 @@ export const RepoContainer: React.FunctionComponent<React.PropsWithChildren<Repo
                 settingsCascade={props.settingsCascade}
                 authenticatedUser={props.authenticatedUser}
                 platformContext={props.platformContext}
-                extensionsController={extensionsController}
                 telemetryService={props.telemetryService}
             />
             {isGoToCodeHostActionVisible && (

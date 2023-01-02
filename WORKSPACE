@@ -69,7 +69,6 @@ npm_translate_lock(
         "//:client/common/package.json",
         "//:client/eslint-plugin-wildcard/package.json",
         "//:client/extension-api-types/package.json",
-        "//:client/extension-api/package.json",
         "//:client/http-client/package.json",
         "//:client/jetbrains/package.json",
         "//:client/observability-client/package.json",

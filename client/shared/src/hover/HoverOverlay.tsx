@@ -7,9 +7,7 @@ import { isErrorLike, sanitizeClass } from '@sourcegraph/common'
 import { Card, Icon, Button } from '@sourcegraph/wildcard'
 
 import { ActionItem, ActionItemComponentProps } from '../actions/ActionItem'
-import { PlatformContextProps } from '../platform/context'
 import { TelemetryProps } from '../telemetry/telemetryService'
-import { ThemeProps } from '../theme'
 
 import { CopyLinkIcon } from './CopyLinkIcon'
 import { toNativeEvent } from './helpers'
@@ -46,9 +44,7 @@ export interface HoverOverlayProps
     extends HoverOverlayBaseProps,
         ActionItemComponentProps,
         HoverOverlayClassProps,
-        TelemetryProps,
-        ThemeProps,
-        PlatformContextProps<'settings'> {
+        TelemetryProps {
     /** A ref callback to get the root overlay element. Use this to calculate the position. */
     hoverRef?: React.Ref<HTMLDivElement>
 
@@ -94,9 +90,6 @@ export const HoverOverlay: React.FunctionComponent<React.PropsWithChildren<Hover
         hoverRef,
         overlayPosition,
         actionsOrError,
-        platformContext,
-        telemetryService,
-        extensionsController,
         pinOptions,
         location,
 
@@ -190,9 +183,6 @@ export const HoverOverlay: React.FunctionComponent<React.PropsWithChildren<Hover
                                         variant="actionItem"
                                         disabledDuringExecution={true}
                                         showLoadingSpinnerDuringExecution={true}
-                                        platformContext={platformContext}
-                                        telemetryService={telemetryService}
-                                        extensionsController={extensionsController}
                                         location={location}
                                         actionItemStyleProps={actionItemStyleProps}
                                     />

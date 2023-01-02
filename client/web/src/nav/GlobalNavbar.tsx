@@ -7,7 +7,6 @@ import BookOutlineIcon from 'mdi-react/BookOutlineIcon'
 import MagnifyIcon from 'mdi-react/MagnifyIcon'
 
 import { isErrorLike, isMacPlatform } from '@sourcegraph/common'
-import { ExtensionsControllerProps } from '@sourcegraph/shared/src/extensions/controller'
 import { shortcutDisplayName } from '@sourcegraph/shared/src/keyboardShortcuts'
 import { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
 import { Settings } from '@sourcegraph/shared/src/schema/settings.schema'
@@ -48,7 +47,6 @@ import styles from './GlobalNavbar.module.scss'
 export interface GlobalNavbarProps
     extends SettingsCascadeProps<Settings>,
         PlatformContextProps,
-        ExtensionsControllerProps,
         TelemetryProps,
         ThemeProps,
         ThemePreferenceProps,
@@ -68,7 +66,6 @@ export interface GlobalNavbarProps
     globbing: boolean
     isSearchAutoFocusRequired?: boolean
     isRepositoryRelatedPage?: boolean
-    enableLegacyExtensions?: boolean
     branding?: typeof window.context.branding
     showKeyboardShortcutsHelp: () => void
     showFeedbackModal: () => void
@@ -135,8 +132,6 @@ export const GlobalNavbar: React.FunctionComponent<React.PropsWithChildren<Globa
     searchContextsEnabled,
     codeMonitoringEnabled,
     notebooksEnabled,
-    extensionsController,
-    enableLegacyExtensions,
     showFeedbackModal,
     ...props
 }) => {

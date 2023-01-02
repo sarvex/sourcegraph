@@ -16,8 +16,6 @@ import { GraphQLClient, HTTPStatusError } from '@sourcegraph/http-client'
 import { SharedSpanName, TraceSpanProvider } from '@sourcegraph/observability-client'
 import { FetchFileParameters, fetchHighlightedFileLineRanges } from '@sourcegraph/shared/src/backend/file'
 import { setCodeIntelSearchContext } from '@sourcegraph/shared/src/codeintel/searchContext'
-import { Controller as ExtensionsController } from '@sourcegraph/shared/src/extensions/controller'
-import { createController as createExtensionsController } from '@sourcegraph/shared/src/extensions/createLazyLoadedController'
 import { PlatformContext } from '@sourcegraph/shared/src/platform/context'
 import { ShortcutProvider } from '@sourcegraph/shared/src/react-shortcuts'
 import {
@@ -163,16 +161,9 @@ export class SourcegraphWebApp extends React.Component<
     private readonly subscriptions = new Subscription()
     private readonly userRepositoriesUpdates = new Subject<void>()
     private readonly platformContext: PlatformContext = createPlatformContext()
-    private readonly extensionsController: ExtensionsController | null = window.context.enableLegacyExtensions
-        ? createExtensionsController(this.platformContext)
-        : null
 
     constructor(props: SourcegraphWebAppProps) {
         super(props)
-
-        if (this.extensionsController !== null) {
-            this.subscriptions.add(this.extensionsController)
-        }
 
         this.state = {
             settingsCascade: EMPTY_SETTINGS_CASCADE,
@@ -252,10 +243,6 @@ export class SourcegraphWebApp extends React.Component<
             // select the user's default search context.
             this.setSelectedSearchContextSpecToDefault()
         }
-
-        this.setWorkspaceSearchContext(this.state.selectedSearchContextSpec).catch(error => {
-            logger.error('Error sending search context to extensions!', error)
-        })
 
         // Update search query state whenever the URL changes
         this.subscriptions.add(
@@ -358,9 +345,7 @@ export class SourcegraphWebApp extends React.Component<
                                     batchChangesWebhookLogsEnabled={window.context.batchChangesWebhookLogsEnabled}
                                     // Search query
                                     fetchHighlightedFileLineRanges={this.fetchHighlightedFileLineRanges}
-                                    // Extensions
                                     platformContext={this.platformContext}
-                                    extensionsController={this.extensionsController}
                                     telemetryService={eventLogger}
                                     isSourcegraphDotCom={window.context.sourcegraphDotComMode}
                                     searchContextsEnabled={this.props.searchContextsEnabled}
@@ -392,9 +377,7 @@ export class SourcegraphWebApp extends React.Component<
 
     private setSelectedSearchContextSpecWithNoChecks = (spec: string): void => {
         this.setState({ selectedSearchContextSpec: spec })
-        this.setWorkspaceSearchContext(spec).catch(error => {
-            logger.error('Error sending search context to extensions', error)
-        })
+        this.setWorkspaceSearchContext(spec)
     }
 
     private setSelectedSearchContextSpec = (spec: string): void => {
@@ -439,7 +422,7 @@ export class SourcegraphWebApp extends React.Component<
         )
     }
 
-    private async setWorkspaceSearchContext(spec: string | undefined): Promise<void> {
+    private setWorkspaceSearchContext(spec: string | undefined): void {
         // NOTE(2022-09-08) Inform the inlined code from
         // sourcegraph/code-intel-extensions about the change of search context.
         // The old extension code previously accessed this information from the
@@ -448,11 +431,6 @@ export class SourcegraphWebApp extends React.Component<
         // extensions on a tight deadline. It would be nice to properly pass
         // around this via React state in the future.
         setCodeIntelSearchContext(spec)
-        if (this.extensionsController === null) {
-            return
-        }
-        const extensionHostAPI = await this.extensionsController.extHostAPI
-        await extensionHostAPI.setSearchContext(spec)
     }
 
     private onCreateNotebook = (blocks: BlockInput[]): void => {

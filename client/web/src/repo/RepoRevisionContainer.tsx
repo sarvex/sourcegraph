@@ -5,7 +5,6 @@ import { Route, RouteComponentProps, Switch } from 'react-router'
 
 import { isErrorLike } from '@sourcegraph/common'
 import { StreamingSearchResultsListProps, CopyPathAction } from '@sourcegraph/search-ui'
-import { ExtensionsControllerProps } from '@sourcegraph/shared/src/extensions/controller'
 import { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
 import { SearchContextProps } from '@sourcegraph/shared/src/search'
 import { SettingsCascadeProps } from '@sourcegraph/shared/src/settings/settings'
@@ -43,7 +42,6 @@ import styles from './RepoRevisionContainer.module.scss'
 export interface RepoRevisionContainerContext
     extends RepoHeaderContributionsLifecycleProps,
         SettingsCascadeProps,
-        ExtensionsControllerProps,
         PlatformContextProps,
         ThemeProps,
         TelemetryProps,
@@ -84,7 +82,6 @@ interface RepoRevisionContainerProps
         PlatformContextProps,
         TelemetryProps,
         HoverThresholdProps,
-        ExtensionsControllerProps,
         ThemeProps,
         Pick<SearchContextProps, 'selectedSearchContextSpec' | 'searchContextsEnabled'>,
         RevisionSpec,

@@ -10,7 +10,6 @@ import { asError, encodeURIPathComponent, ErrorLike, isErrorLike, logger } from 
 import { gql } from '@sourcegraph/http-client'
 import { fetchTreeEntries } from '@sourcegraph/shared/src/backend/repo'
 import { displayRepoName } from '@sourcegraph/shared/src/components/RepoLink'
-import { ExtensionsControllerProps } from '@sourcegraph/shared/src/extensions/controller'
 import { TreeFields } from '@sourcegraph/shared/src/graphql-operations'
 import { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
 import { Settings } from '@sourcegraph/shared/src/schema/settings.schema'
@@ -59,7 +58,6 @@ import styles from './TreePage.module.scss'
 
 interface Props
     extends SettingsCascadeProps<Settings>,
-        ExtensionsControllerProps,
         PlatformContextProps,
         ThemeProps,
         TelemetryProps,
@@ -161,37 +159,6 @@ export const TreePage: React.FunctionComponent<React.PropsWithChildren<Props>> =
 
     // Add DirectoryViewer
     const uri = toURIWithPath({ repoName, commitID, filePath })
-
-    const { extensionsController } = props
-    useEffect(() => {
-        if (!showCodeInsights || extensionsController === null) {
-            return
-        }
-
-        const viewerIdPromise = extensionsController.extHostAPI
-            .then(extensionHostAPI =>
-                extensionHostAPI.addViewerIfNotExists({
-                    type: 'DirectoryViewer',
-                    isActive: true,
-                    resource: uri,
-                })
-            )
-            .catch(error => {
-                logger.error('Error adding viewer to extension host:', error)
-                return null
-            })
-
-        return () => {
-            Promise.all([extensionsController.extHostAPI, viewerIdPromise])
-                .then(([extensionHostAPI, viewerId]) => {
-                    if (viewerId) {
-                        return extensionHostAPI.removeViewer(viewerId)
-                    }
-                    return
-                })
-                .catch(error => logger.error('Error removing viewer from extension host:', error))
-        }
-    }, [uri, showCodeInsights, extensionsController])
 
     const getPageTitle = (): string => {
         const repoString = displayRepoName(repoName)

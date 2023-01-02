@@ -46,16 +46,6 @@ export const repoContainerRoutes: readonly RepoContainerRoute[] = [
         render: context => (
             <RepoRevisionWrapper>
                 <RepositoryCommitPage {...context} />
-                {window.context.enableLegacyExtensions && (
-                    <ActionItemsBar
-                        extensionsController={context.extensionsController}
-                        platformContext={context.platformContext}
-                        useActionItemsBar={context.useActionItemsBar}
-                        location={context.location}
-                        telemetryService={context.telemetryService}
-                        source="commit"
-                    />
-                )}
             </RepoRevisionWrapper>
         ),
     },
@@ -72,16 +62,6 @@ export const repoContainerRoutes: readonly RepoContainerRoute[] = [
         render: context => (
             <RepoRevisionWrapper>
                 <RepositoryCompareArea {...context} />
-                {window.context.enableLegacyExtensions && (
-                    <ActionItemsBar
-                        extensionsController={context.extensionsController}
-                        platformContext={context.platformContext}
-                        useActionItemsBar={context.useActionItemsBar}
-                        location={context.location}
-                        telemetryService={context.telemetryService}
-                        source="compare"
-                    />
-                )}
             </RepoRevisionWrapper>
         ),
     },
@@ -145,7 +125,6 @@ export const repoRevisionContainerRoutes: readonly RepoRevisionContainerRoute[] 
                     repo={props.repo}
                     useActionItemsBar={props.useActionItemsBar}
                     location={props.location}
-                    extensionsController={props.extensionsController}
                     platformContext={props.platformContext}
                     telemetryService={props.telemetryService}
                     source={routePath === blobPath ? 'blob' : undefined}
@@ -172,16 +151,6 @@ export const repoRevisionContainerRoutes: readonly RepoRevisionContainerRoute[] 
         render: context => (
             <RepoRevisionWrapper>
                 <RepositoryCompareArea {...context} />
-                {window.context.enableLegacyExtensions && (
-                    <ActionItemsBar
-                        extensionsController={context.extensionsController}
-                        platformContext={context.platformContext}
-                        useActionItemsBar={context.useActionItemsBar}
-                        location={context.location}
-                        telemetryService={context.telemetryService}
-                        source="compare"
-                    />
-                )}
             </RepoRevisionWrapper>
         ),
     },

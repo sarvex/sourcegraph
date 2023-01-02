@@ -1,6 +1,6 @@
 import { EditorView, getTooltip, Tooltip, TooltipView } from '@codemirror/view'
 
-import * as sourcegraph from '@sourcegraph/extension-api-types'
+import { Position } from '@sourcegraph/shared/src/codeintel/legacy-extensions/api'
 
 import { closeHover, showHover } from '../token-selection/hover'
 
@@ -23,7 +23,7 @@ class TemporaryTooltip implements Tooltip {
 export function showTemporaryTooltip(
     view: EditorView,
     message: string,
-    position: sourcegraph.Position,
+    position: Position,
     clearTimeout: number,
     options?: {
         arrow?: boolean

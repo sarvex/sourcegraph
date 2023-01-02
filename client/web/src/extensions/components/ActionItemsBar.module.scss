@@ -133,10 +133,3 @@ $default-icon-colors: --oc-grape-7, --oc-violet-7, --oc-cyan-9, --oc-indigo-7, -
     color: var(--icon-color);
 }
 
-.scroll {
-    width: var(--action-item-width);
-
-    &:hover {
-        background-color: var(--color-bg-2);
-    }
-}

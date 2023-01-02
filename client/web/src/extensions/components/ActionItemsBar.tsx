@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { mdiChevronDoubleDown, mdiChevronDoubleUp, mdiPuzzleOutline } from '@mdi/js'
+import { mdiChevronDoubleDown, mdiChevronDoubleUp } from '@mdi/js'
 import VisuallyHidden from '@reach/visually-hidden'
 import classNames from 'classnames'
 import * as H from 'history'
@@ -180,7 +180,7 @@ const actionItemClassName = classNames(
 )
 
 /**
- * Renders extensions (both migrated to the core workflow and legacy) actions items in the sidebar.
+ * Renders actions items in the sidebar.
  */
 export const ActionItemsBar = React.memo<ActionItemsBarProps>(function ActionItemsBar(props) {
     const { location, source } = props
@@ -206,7 +206,6 @@ export const ActionItemsBar = React.memo<ActionItemsBarProps>(function ActionIte
             {/* To be clear to users that this isn't an error reported by extensions about e.g. the code they're viewing. */}
             <ErrorBoundary location={props.location} render={error => <span>Component error: {error.message}</span>}>
                 <ActionItemsDivider />
-
                 {source !== 'compare' && source !== 'commit' && (
                     <GoToCodeHostAction
                         repo={props.repo}
@@ -279,12 +278,7 @@ export const ActionItemsToggle: React.FunctionComponent<React.PropsWithChildren<
                                     svgPath={mdiChevronDoubleUp}
                                 />
                             ) : (
-                                <Icon
-                                    aria-hidden={true}
-                                    svgPath={
-                                        window.context.enableLegacyExtensions ? mdiPuzzleOutline : mdiChevronDoubleDown
-                                    }
-                                />
+                                <Icon aria-hidden={true} svgPath={mdiChevronDoubleDown} />
                             )}
                             <VisuallyHidden>Down arrow to enter</VisuallyHidden>
                         </ButtonLink>

@@ -6,7 +6,6 @@ import {
     mockFetchSearchContexts,
     mockGetUserSearchContextNamespaces,
 } from '@sourcegraph/shared/src/testing/searchContexts/testHelpers'
-import { extensionsController } from '@sourcegraph/shared/src/testing/searchTestHelpers'
 import { ThemeProps } from '@sourcegraph/shared/src/theme'
 import { Grid, H3 } from '@sourcegraph/wildcard'
 
@@ -27,7 +26,6 @@ const getDefaultProps = (props: ThemeProps): GlobalNavbarProps => ({
     },
     location: history.location,
     history,
-    extensionsController,
     telemetryService: NOOP_TELEMETRY_SERVICE,
     themePreference: ThemePreference.Light,
     onThemePreferenceChange: () => undefined,
@@ -58,7 +56,6 @@ const allNavItemsProps: Partial<GlobalNavbarProps> = {
     batchChangesExecutionEnabled: true,
     batchChangesWebhookLogsEnabled: true,
     codeInsightsEnabled: true,
-    enableLegacyExtensions: true,
 }
 
 const allAuthenticatedNavItemsProps: Partial<GlobalNavbarProps> = {
