@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/sourcegraph/log"
 
 	apiclient "github.com/sourcegraph/sourcegraph/enterprise/internal/executor"
@@ -119,16 +122,22 @@ func (h *handler[T]) dequeue(ctx context.Context, metadata executorMetadata) (_ 
 		job.Version = 2
 	}
 
-	token, err := generateJobToken()
+	token, err := generateJobToken(job.ID, job.RepositoryName)
 	if err != nil {
 		return apiclient.Job{}, false, errors.Wrap(err, "Job Token")
 	}
-	job.Authorization = token
+	job.Token = token
 
 	return job, true, nil
 }
 
-func generateJobToken() (string, error) {
+func generateJobToken(jobId int, repositoryName string) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.RegisteredClaims{
+		Issuer:    repositoryName,
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)), // TODO
+		Subject:   strconv.FormatInt(int64(jobId), 10),
+	})
+	_ = token
 	return "", nil
 }
 
