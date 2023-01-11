@@ -119,7 +119,17 @@ func (h *handler[T]) dequeue(ctx context.Context, metadata executorMetadata) (_ 
 		job.Version = 2
 	}
 
+	token, err := generateJobToken()
+	if err != nil {
+		return apiclient.Job{}, false, errors.Wrap(err, "Job Token")
+	}
+	job.Authorization = token
+
 	return job, true, nil
+}
+
+func generateJobToken() (string, error) {
+	return "", nil
 }
 
 // addExecutionLogEntry calls AddExecutionLogEntry for the given job.
