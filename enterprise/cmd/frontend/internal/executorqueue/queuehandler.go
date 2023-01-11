@@ -14,12 +14,9 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/actor"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
-	metricsstore "github.com/sourcegraph/sourcegraph/internal/metrics/store"
 )
 
 func newExecutorQueueHandler(logger log.Logger, db database.DB, queueHandlers []handler.ExecutorHandler, accessToken func() string, uploadHandler http.Handler, batchesWorkspaceFileGetHandler http.Handler, batchesWorkspaceFileExistsHandler http.Handler) func() http.Handler {
-	metricsStore := metricsstore.NewDistributedStore("executors:")
-	executorStore := db.Executors()
 	gitserverClient := gitserver.NewClient(db)
 
 	factory := func() http.Handler {
@@ -32,7 +29,7 @@ func newExecutorQueueHandler(logger log.Logger, db database.DB, queueHandlers []
 		base.Path("/git/{RepoName:.*}/git-upload-pack").Handler(gitserverProxy(logger, gitserverClient, "/git-upload-pack"))
 
 		// Serve the executor queue API.
-		handler.SetupRoutes(executorStore, metricsStore, queueHandlers, base.PathPrefix("/queue/").Subrouter())
+		handler.SetupRoutes(queueHandlers, base.PathPrefix("/queue/").Subrouter())
 
 		// Upload LSIF indexes without a sudo access token or github tokens.
 		base.Path("/lsif/upload").Methods("POST").Handler(uploadHandler)

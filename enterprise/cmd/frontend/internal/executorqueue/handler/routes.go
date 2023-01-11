@@ -18,15 +18,13 @@ import (
 	"github.com/sourcegraph/log"
 
 	apiclient "github.com/sourcegraph/sourcegraph/enterprise/internal/executor"
-	"github.com/sourcegraph/sourcegraph/internal/database"
-	metricsstore "github.com/sourcegraph/sourcegraph/internal/metrics/store"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
 // SetupRoutes registers all route handlers required for all configured executor
 // queues with the given router.
-func SetupRoutes(executorStore database.ExecutorStore, metricsStore metricsstore.DistributedStore, handlers []ExecutorHandler, router *mux.Router) {
+func SetupRoutes(handlers []ExecutorHandler, router *mux.Router) {
 	for _, h := range handlers {
 		subRouter := router.PathPrefix(fmt.Sprintf("/{queueName:(?:%s)}/", regexp.QuoteMeta(h.Name()))).Subrouter()
 		routes := map[string]func(w http.ResponseWriter, r *http.Request){
@@ -40,8 +38,8 @@ func SetupRoutes(executorStore database.ExecutorStore, metricsStore metricsstore
 			// TODO: This endpoint can be removed in Sourcegraph 4.4.
 			"canceledJobs": h.handleCanceledJobs,
 		}
-		for path, handler := range routes {
-			subRouter.Path(fmt.Sprintf("/%s", path)).Methods("POST").HandlerFunc(handler)
+		for path, route := range routes {
+			subRouter.Path(fmt.Sprintf("/%s", path)).Methods("POST").HandlerFunc(route)
 		}
 	}
 }
