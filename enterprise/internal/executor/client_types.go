@@ -18,8 +18,8 @@ type Job struct {
 	// that different queues can share identifiers.
 	ID int `json:"id"`
 
-	// Authorization TODO
-	Authorization string `json:"authorization"`
+	// Token TODO
+	Token string `json:"Token"`
 
 	// RepositoryName is the name of the repository to be cloned into the
 	// workspace prior to job execution.
