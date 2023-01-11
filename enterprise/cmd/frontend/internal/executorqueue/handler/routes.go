@@ -224,7 +224,7 @@ func (h *handler[T]) wrapHandler(w http.ResponseWriter, r *http.Request, payload
 // decodeAndLabelMetrics decodes the text serialized prometheus metrics dump and then
 // applies common labels.
 func decodeAndLabelMetrics(encodedMetrics, instanceName string) ([]*dto.MetricFamily, error) {
-	data := []*dto.MetricFamily{}
+	var data []*dto.MetricFamily
 
 	dec := expfmt.NewDecoder(strings.NewReader(encodedMetrics), expfmt.FmtText)
 	for {
