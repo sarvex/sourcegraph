@@ -95,14 +95,14 @@ func (c *Client) Dequeue(ctx context.Context, queueName string, job *executor.Jo
 	return c.client.DoAndDecode(ctx, req, &job)
 }
 
-func (c *Client) AddExecutionLogEntry(ctx context.Context, queueName string, jobID int, entry workerutil.ExecutionLogEntry) (entryID int, err error) {
+func (c *Client) AddExecutionLogEntry(ctx context.Context, token string, queueName string, jobID int, entry workerutil.ExecutionLogEntry) (entryID int, err error) {
 	ctx, _, endObservation := c.operations.addExecutionLogEntry.With(ctx, &err, observation.Args{LogFields: []otlog.Field{
 		otlog.String("queueName", queueName),
 		otlog.Int("jobID", jobID),
 	}})
 	defer endObservation(1, observation.Args{})
 
-	req, err := c.client.NewJSONRequest(http.MethodPost, fmt.Sprintf("%s/addExecutionLogEntry", queueName), executor.AddExecutionLogEntryRequest{
+	req, err := c.client.NewJSONJobRequest(http.MethodPost, fmt.Sprintf("%s/addExecutionLogEntry", queueName), token, executor.AddExecutionLogEntryRequest{
 		ExecutorName:      c.options.ExecutorName,
 		JobID:             jobID,
 		ExecutionLogEntry: entry,
@@ -115,7 +115,7 @@ func (c *Client) AddExecutionLogEntry(ctx context.Context, queueName string, job
 	return entryID, err
 }
 
-func (c *Client) UpdateExecutionLogEntry(ctx context.Context, queueName string, jobID, entryID int, entry workerutil.ExecutionLogEntry) (err error) {
+func (c *Client) UpdateExecutionLogEntry(ctx context.Context, token string, queueName string, jobID, entryID int, entry workerutil.ExecutionLogEntry) (err error) {
 	ctx, _, endObservation := c.operations.updateExecutionLogEntry.With(ctx, &err, observation.Args{LogFields: []otlog.Field{
 		otlog.String("queueName", queueName),
 		otlog.Int("jobID", jobID),
@@ -123,7 +123,7 @@ func (c *Client) UpdateExecutionLogEntry(ctx context.Context, queueName string, 
 	}})
 	defer endObservation(1, observation.Args{})
 
-	req, err := c.client.NewJSONRequest(http.MethodPost, fmt.Sprintf("%s/updateExecutionLogEntry", queueName), executor.UpdateExecutionLogEntryRequest{
+	req, err := c.client.NewJSONJobRequest(http.MethodPost, fmt.Sprintf("%s/updateExecutionLogEntry", queueName), token, executor.UpdateExecutionLogEntryRequest{
 		ExecutorName:      c.options.ExecutorName,
 		JobID:             jobID,
 		EntryID:           entryID,

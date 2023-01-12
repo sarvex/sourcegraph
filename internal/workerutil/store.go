@@ -32,11 +32,11 @@ type Store[T Record] interface {
 	// AddExecutionLogEntry adds an executor log entry to the record and
 	// returns the ID of the new entry (which can be used with
 	// UpdateExecutionLogEntry) and a possible error.
-	AddExecutionLogEntry(ctx context.Context, id int, entry ExecutionLogEntry) (int, error)
+	AddExecutionLogEntry(ctx context.Context, token string, id int, entry ExecutionLogEntry) (int, error)
 
 	// UpdateExecutionLogEntry updates the executor log entry with the given ID
 	// on the given record.
-	UpdateExecutionLogEntry(ctx context.Context, recordID, entryID int, entry ExecutionLogEntry) error
+	UpdateExecutionLogEntry(ctx context.Context, token string, recordID, entryID int, entry ExecutionLogEntry) error
 
 	// MarkComplete attempts to update the state of the record to complete. This method returns a boolean flag indicating
 	// if the record was updated.

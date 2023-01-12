@@ -39,8 +39,8 @@ type LogEntry interface {
 }
 
 type ExecutionLogEntryStore interface {
-	AddExecutionLogEntry(ctx context.Context, id int, entry workerutil.ExecutionLogEntry) (int, error)
-	UpdateExecutionLogEntry(ctx context.Context, id, entryID int, entry workerutil.ExecutionLogEntry) error
+	AddExecutionLogEntry(ctx context.Context, token string, id int, entry workerutil.ExecutionLogEntry) (int, error)
+	UpdateExecutionLogEntry(ctx context.Context, token string, id, entryID int, entry workerutil.ExecutionLogEntry) error
 }
 
 type entryHandle struct {
@@ -169,7 +169,7 @@ func (l *logger) writeEntries() {
 	var wg sync.WaitGroup
 	for handle := range l.handles {
 		initialLogEntry := handle.CurrentLogEntry()
-		entryID, err := l.store.AddExecutionLogEntry(context.Background(), l.recordID, initialLogEntry)
+		entryID, err := l.store.AddExecutionLogEntry(context.Background(), l.job.Token, l.recordID, initialLogEntry)
 		if err != nil {
 			// If there is a timeout or cancellation error we don't want to skip
 			// writing these logs as users will often want to see how far something
@@ -229,7 +229,7 @@ func (l *logger) syncLogEntry(handle *entryHandle, entryID int, old workerutil.E
 
 		log15.Debug("Updating executor log entry", logArgs...)
 
-		if err := l.store.UpdateExecutionLogEntry(context.Background(), l.recordID, entryID, current); err != nil {
+		if err := l.store.UpdateExecutionLogEntry(context.Background(), l.job.Token, l.recordID, entryID, current); err != nil {
 			logMethod := log15.Warn
 			if lastWrite {
 				logMethod = log15.Error

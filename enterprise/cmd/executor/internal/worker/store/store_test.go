@@ -106,7 +106,7 @@ func TestQueueShim_AddExecutionLogEntry(t *testing.T) {
 	queueStore.On("AddExecutionLogEntry", mock.Anything, "test-queue", 1, entry).
 		Return(2, nil)
 
-	id, err := shim.AddExecutionLogEntry(context.Background(), 1, entry)
+	id, err := shim.AddExecutionLogEntry(context.Background(), "", 1, entry)
 	assert.NoError(t, err)
 	assert.Equal(t, 2, id)
 
@@ -133,7 +133,7 @@ func TestQueueShim_UpdateExecutionLogEntry(t *testing.T) {
 	queueStore.On("UpdateExecutionLogEntry", mock.Anything, "test-queue", 1, 2, entry).
 		Return(nil)
 
-	err := shim.UpdateExecutionLogEntry(context.Background(), 1, 2, entry)
+	err := shim.UpdateExecutionLogEntry(context.Background(), "", 1, 2, entry)
 	assert.NoError(t, err)
 
 	mock.AssertExpectationsForObjects(t, queueStore)
@@ -253,12 +253,12 @@ func (m *queueStoreMock) Dequeue(ctx context.Context, queueName string, payload 
 	return args.Bool(0), args.Error(1)
 }
 
-func (m *queueStoreMock) AddExecutionLogEntry(ctx context.Context, queueName string, jobID int, entry workerutil.ExecutionLogEntry) (int, error) {
+func (m *queueStoreMock) AddExecutionLogEntry(ctx context.Context, token string, queueName string, jobID int, entry workerutil.ExecutionLogEntry) (int, error) {
 	args := m.Called(ctx, queueName, jobID, entry)
 	return args.Int(0), args.Error(1)
 }
 
-func (m *queueStoreMock) UpdateExecutionLogEntry(ctx context.Context, queueName string, jobID, entryID int, entry workerutil.ExecutionLogEntry) error {
+func (m *queueStoreMock) UpdateExecutionLogEntry(ctx context.Context, token string, queueName string, jobID, entryID int, entry workerutil.ExecutionLogEntry) error {
 	args := m.Called(ctx, queueName, jobID, entryID, entry)
 	return args.Error(0)
 }

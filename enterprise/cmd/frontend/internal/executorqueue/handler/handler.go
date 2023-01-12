@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -122,7 +123,7 @@ func (h *handler[T]) dequeue(ctx context.Context, metadata executorMetadata) (_ 
 		job.Version = 2
 	}
 
-	token, err := generateJobToken(job.ID, job.RepositoryName)
+	token, err := newJobToken(job.ID, job.RepositoryName)
 	if err != nil {
 		return apiclient.Job{}, false, errors.Wrap(err, "Job Token")
 	}
@@ -131,14 +132,21 @@ func (h *handler[T]) dequeue(ctx context.Context, metadata executorMetadata) (_ 
 	return job, true, nil
 }
 
-func generateJobToken(jobId int, repositoryName string) (string, error) {
+func newJobToken(jobId int, repositoryName string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.RegisteredClaims{
 		Issuer:    repositoryName,
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)), // TODO
 		Subject:   strconv.FormatInt(int64(jobId), 10),
 	})
-	_ = token
-	return "", nil
+	decodedSigningKey, err := base64.StdEncoding.DecodeString("ZXhlY3V0b3JzLmpvYi5zaWduaW5nS2V5Cg==")
+	if err != nil {
+		return "", err
+	}
+	tokenString, err := token.SignedString(decodedSigningKey)
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
 }
 
 // addExecutionLogEntry calls AddExecutionLogEntry for the given job.

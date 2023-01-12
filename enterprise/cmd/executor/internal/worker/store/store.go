@@ -17,8 +17,8 @@ type QueueShim struct {
 
 type QueueStore interface {
 	Dequeue(ctx context.Context, queueName string, payload *executor.Job) (bool, error)
-	AddExecutionLogEntry(ctx context.Context, queueName string, jobID int, entry workerutil.ExecutionLogEntry) (int, error)
-	UpdateExecutionLogEntry(ctx context.Context, queueName string, jobID, entryID int, entry workerutil.ExecutionLogEntry) error
+	AddExecutionLogEntry(ctx context.Context, token string, queueName string, jobID int, entry workerutil.ExecutionLogEntry) (int, error)
+	UpdateExecutionLogEntry(ctx context.Context, token string, queueName string, jobID, entryID int, entry workerutil.ExecutionLogEntry) error
 	MarkComplete(ctx context.Context, queueName string, jobID int) error
 	MarkErrored(ctx context.Context, queueName string, jobID int, errorMessage string) error
 	MarkFailed(ctx context.Context, queueName string, jobID int, errorMessage string) error
@@ -46,12 +46,12 @@ func (s *QueueShim) Heartbeat(ctx context.Context, ids []int) (knownIDs, cancelI
 	return s.Store.Heartbeat(ctx, s.Name, ids)
 }
 
-func (s *QueueShim) AddExecutionLogEntry(ctx context.Context, id int, entry workerutil.ExecutionLogEntry) (int, error) {
-	return s.Store.AddExecutionLogEntry(ctx, s.Name, id, entry)
+func (s *QueueShim) AddExecutionLogEntry(ctx context.Context, token string, id int, entry workerutil.ExecutionLogEntry) (int, error) {
+	return s.Store.AddExecutionLogEntry(ctx, token, s.Name, id, entry)
 }
 
-func (s *QueueShim) UpdateExecutionLogEntry(ctx context.Context, jobID, entryID int, entry workerutil.ExecutionLogEntry) error {
-	return s.Store.UpdateExecutionLogEntry(ctx, s.Name, jobID, entryID, entry)
+func (s *QueueShim) UpdateExecutionLogEntry(ctx context.Context, token string, jobID, entryID int, entry workerutil.ExecutionLogEntry) error {
+	return s.Store.UpdateExecutionLogEntry(ctx, token, s.Name, jobID, entryID, entry)
 }
 
 func (s *QueueShim) MarkComplete(ctx context.Context, id int) (bool, error) {

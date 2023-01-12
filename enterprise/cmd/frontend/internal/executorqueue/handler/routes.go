@@ -28,15 +28,28 @@ func SetupRoutes(handlers []ExecutorHandler, router *mux.Router) {
 	for _, h := range handlers {
 		subRouter := router.PathPrefix(fmt.Sprintf("/{queueName:(?:%s)}/", regexp.QuoteMeta(h.Name()))).Subrouter()
 		routes := map[string]func(w http.ResponseWriter, r *http.Request){
-			"dequeue":                 h.handleDequeue,
+			"dequeue":   h.handleDequeue,
+			"heartbeat": h.handleHeartbeat,
+			// TODO: This endpoint can be removed in Sourcegraph 4.4.
+			"canceledJobs": h.handleCanceledJobs,
+		}
+		for path, route := range routes {
+			subRouter.Path(fmt.Sprintf("/%s", path)).Methods("POST").HandlerFunc(route)
+		}
+	}
+}
+
+// SetupJobRoutes registers all route handlers required for all configured executor
+// queues with the given router.
+func SetupJobRoutes(handlers []ExecutorHandler, router *mux.Router) {
+	for _, h := range handlers {
+		subRouter := router.PathPrefix(fmt.Sprintf("/{queueName:(?:%s)}/", regexp.QuoteMeta(h.Name()))).Subrouter()
+		routes := map[string]func(w http.ResponseWriter, r *http.Request){
 			"addExecutionLogEntry":    h.handleAddExecutionLogEntry,
 			"updateExecutionLogEntry": h.handleUpdateExecutionLogEntry,
 			"markComplete":            h.handleMarkComplete,
 			"markErrored":             h.handleMarkErrored,
 			"markFailed":              h.handleMarkFailed,
-			"heartbeat":               h.handleHeartbeat,
-			// TODO: This endpoint can be removed in Sourcegraph 4.4.
-			"canceledJobs": h.handleCanceledJobs,
 		}
 		for path, route := range routes {
 			subRouter.Path(fmt.Sprintf("/%s", path)).Methods("POST").HandlerFunc(route)
