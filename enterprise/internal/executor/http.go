@@ -54,6 +54,12 @@ type HeartbeatRequest struct {
 	PrometheusMetrics string `json:"prometheusMetrics"`
 }
 
+type ExecutorAPIVersion string
+
+const (
+	ExecutorAPIVersion2 ExecutorAPIVersion = "V2"
+)
+
 type HeartbeatResponse struct {
 	KnownIDs  []int `json:"knownIds"`
 	CancelIDs []int `json:"cancelIds"`

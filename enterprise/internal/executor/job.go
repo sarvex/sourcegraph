@@ -278,12 +278,6 @@ type CliStep struct {
 	Env []string `json:"env"`
 }
 
-type ExecutorAPIVersion string
-
-const (
-	ExecutorAPIVersion2 ExecutorAPIVersion = "V2"
-)
-
 // DockerAuthConfig represents a subset of the docker cli config with the necessary
 // fields to make authentication work.
 type DockerAuthConfig struct {
