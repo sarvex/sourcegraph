@@ -1,4 +1,4 @@
-package executor
+package executor_test
 
 import (
 	"encoding/json"
@@ -7,6 +7,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcegraph/sourcegraph/enterprise/internal/executor"
 )
 
 func TestJob_MarshalJSON(t *testing.T) {
@@ -15,12 +17,12 @@ func TestJob_MarshalJSON(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		input    Job
+		input    executor.Job
 		expected string
 	}{
 		{
 			name: "4.3",
-			input: Job{
+			input: executor.Job{
 				Version:             2,
 				ID:                  1,
 				RepositoryName:      "my-repo",
@@ -29,7 +31,7 @@ func TestJob_MarshalJSON(t *testing.T) {
 				FetchTags:           true,
 				ShallowClone:        true,
 				SparseCheckout:      []string{"a", "b", "c"},
-				VirtualMachineFiles: map[string]VirtualMachineFile{
+				VirtualMachineFiles: map[string]executor.VirtualMachineFile{
 					"script1.sh": {
 						Content: []byte("hello"),
 					},
@@ -39,7 +41,7 @@ func TestJob_MarshalJSON(t *testing.T) {
 						ModifiedAt: modAt,
 					},
 				},
-				DockerSteps: []DockerStep{
+				DockerSteps: []executor.DockerStep{
 					{
 						Image:    "my-image",
 						Commands: []string{"run"},
@@ -47,7 +49,7 @@ func TestJob_MarshalJSON(t *testing.T) {
 						Env:      []string{"FOO=BAR"},
 					},
 				},
-				CliSteps: []CliStep{
+				CliSteps: []executor.CliStep{
 					{
 						Commands: []string{"x", "y", "z"},
 						Dir:      "raz/daz",
@@ -97,7 +99,7 @@ func TestJob_MarshalJSON(t *testing.T) {
 		},
 		{
 			name: "4.2",
-			input: Job{
+			input: executor.Job{
 				ID:                  1,
 				RepositoryName:      "my-repo",
 				RepositoryDirectory: "foo/bar",
@@ -105,12 +107,12 @@ func TestJob_MarshalJSON(t *testing.T) {
 				FetchTags:           true,
 				ShallowClone:        true,
 				SparseCheckout:      []string{"a", "b", "c"},
-				VirtualMachineFiles: map[string]VirtualMachineFile{
+				VirtualMachineFiles: map[string]executor.VirtualMachineFile{
 					"script1.sh": {
 						Content: []byte("hello"),
 					},
 				},
-				DockerSteps: []DockerStep{
+				DockerSteps: []executor.DockerStep{
 					{
 						Image:    "my-image",
 						Commands: []string{"run"},
@@ -118,7 +120,7 @@ func TestJob_MarshalJSON(t *testing.T) {
 						Env:      []string{"FOO=BAR"},
 					},
 				},
-				CliSteps: []CliStep{
+				CliSteps: []executor.CliStep{
 					{
 						Commands: []string{"x", "y", "z"},
 						Dir:      "raz/daz",
@@ -185,7 +187,7 @@ func TestJob_UnmarshalJSON(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
-		expected Job
+		expected executor.Job
 	}{
 		{
 			name: "4.3",
@@ -223,7 +225,7 @@ func TestJob_UnmarshalJSON(t *testing.T) {
 		"password": "foo"
 	}
 }`,
-			expected: Job{
+			expected: executor.Job{
 				Version:             2,
 				ID:                  1,
 				RepositoryName:      "my-repo",
@@ -232,7 +234,7 @@ func TestJob_UnmarshalJSON(t *testing.T) {
 				FetchTags:           true,
 				ShallowClone:        true,
 				SparseCheckout:      []string{"a", "b", "c"},
-				VirtualMachineFiles: map[string]VirtualMachineFile{
+				VirtualMachineFiles: map[string]executor.VirtualMachineFile{
 					"script1.sh": {
 						Content: []byte("hello"),
 					},
@@ -242,7 +244,7 @@ func TestJob_UnmarshalJSON(t *testing.T) {
 						ModifiedAt: modAt,
 					},
 				},
-				DockerSteps: []DockerStep{
+				DockerSteps: []executor.DockerStep{
 					{
 						Image:    "my-image",
 						Commands: []string{"run"},
@@ -250,7 +252,7 @@ func TestJob_UnmarshalJSON(t *testing.T) {
 						Env:      []string{"FOO=BAR"},
 					},
 				},
-				CliSteps: []CliStep{
+				CliSteps: []executor.CliStep{
 					{
 						Commands: []string{"x", "y", "z"},
 						Dir:      "raz/daz",
@@ -292,7 +294,7 @@ func TestJob_UnmarshalJSON(t *testing.T) {
 		"password": "foo"
 	}
 }`,
-			expected: Job{
+			expected: executor.Job{
 				ID:                  1,
 				RepositoryName:      "my-repo",
 				RepositoryDirectory: "foo/bar",
@@ -300,12 +302,12 @@ func TestJob_UnmarshalJSON(t *testing.T) {
 				FetchTags:           true,
 				ShallowClone:        true,
 				SparseCheckout:      []string{"a", "b", "c"},
-				VirtualMachineFiles: map[string]VirtualMachineFile{
+				VirtualMachineFiles: map[string]executor.VirtualMachineFile{
 					"script1.sh": {
 						Content: []byte("hello"),
 					},
 				},
-				DockerSteps: []DockerStep{
+				DockerSteps: []executor.DockerStep{
 					{
 						Image:    "my-image",
 						Commands: []string{"run"},
@@ -313,7 +315,7 @@ func TestJob_UnmarshalJSON(t *testing.T) {
 						Env:      []string{"FOO=BAR"},
 					},
 				},
-				CliSteps: []CliStep{
+				CliSteps: []executor.CliStep{
 					{
 						Commands: []string{"x", "y", "z"},
 						Dir:      "raz/daz",
@@ -328,7 +330,7 @@ func TestJob_UnmarshalJSON(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			var actual Job
+			var actual executor.Job
 			err := json.Unmarshal([]byte(test.input), &actual)
 			require.NoError(t, err)
 			if diff := cmp.Diff(test.expected, actual); diff != "" {
