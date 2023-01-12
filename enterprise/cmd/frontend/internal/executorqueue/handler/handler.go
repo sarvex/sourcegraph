@@ -23,6 +23,7 @@ import (
 
 type ExecutorHandler interface {
 	Name() string
+	exists(ctx context.Context, id int) (bool, error)
 	handleDequeue(w http.ResponseWriter, r *http.Request)
 	handleAddExecutionLogEntry(w http.ResponseWriter, r *http.Request)
 	handleUpdateExecutionLogEntry(w http.ResponseWriter, r *http.Request)
@@ -79,6 +80,10 @@ type executorMetadata struct {
 
 func (h *handler[T]) Name() string { return h.QueueOptions.Name }
 
+func (h *handler[T]) exists(ctx context.Context, id int) (bool, error) {
+	return h.Store.Exists(ctx, id)
+}
+
 // dequeue selects a job record from the database and stashes metadata including
 // the job record and the locking transaction. If no job is available for processing,
 // a false-valued flag is returned.
@@ -123,7 +128,7 @@ func (h *handler[T]) dequeue(ctx context.Context, metadata executorMetadata) (_ 
 		job.Version = 2
 	}
 
-	token, err := newJobToken(job.ID, job.RepositoryName)
+	token, err := newJobToken(metadata.Name, job.ID)
 	if err != nil {
 		return apiclient.Job{}, false, errors.Wrap(err, "Job Token")
 	}
@@ -132,11 +137,15 @@ func (h *handler[T]) dequeue(ctx context.Context, metadata executorMetadata) (_ 
 	return job, true, nil
 }
 
-func newJobToken(jobId int, repositoryName string) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.RegisteredClaims{
-		Issuer:    repositoryName,
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)), // TODO
-		Subject:   strconv.FormatInt(int64(jobId), 10),
+func newJobToken(hostname string, jobId int) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jobOperationClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    hostname,
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)), // TODO
+			Subject:   strconv.FormatInt(int64(jobId), 10),
+		},
+		// TODO
+		AccessToken: "hunter2hunter",
 	})
 	decodedSigningKey, err := base64.StdEncoding.DecodeString("ZXhlY3V0b3JzLmpvYi5zaWduaW5nS2V5Cg==")
 	if err != nil {
@@ -147,6 +156,11 @@ func newJobToken(jobId int, repositoryName string) (string, error) {
 		return "", err
 	}
 	return tokenString, nil
+}
+
+type jobOperationClaims struct {
+	jwt.RegisteredClaims
+	AccessToken string `json:"accessToken"`
 }
 
 // addExecutionLogEntry calls AddExecutionLogEntry for the given job.

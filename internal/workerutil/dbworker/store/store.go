@@ -82,6 +82,8 @@ type Store[T workerutil.Record] interface {
 	// handle of the other ShareableStore.
 	With(other basestore.ShareableStore) Store[T]
 
+	Exists(ctx context.Context, id int) (bool, error)
+
 	// QueuedCount returns the number of queued and errored records. If includeProcessing
 	// is true it returns the number of queued _and_ processing records.
 	QueuedCount(ctx context.Context, includeProcessing bool) (int, error)
@@ -358,6 +360,24 @@ var columnNames = []string{
 	"worker_hostname",
 	"cancel",
 }
+
+func (s *store[T]) Exists(ctx context.Context, id int) (_ bool, err error) {
+	// TODO
+	ctx, _, endObservation := s.operations.queuedCount.With(ctx, &err, observation.Args{})
+	defer endObservation(1, observation.Args{})
+
+	exists, _, err := basestore.ScanFirstBool(s.Query(ctx, s.formatQuery(
+		existsQuery,
+		quote(s.options.TableName),
+		s.formatQuery("{id} = %s", id),
+	)))
+
+	return exists, err
+}
+
+const existsQuery = `
+SELECT EXISTS(SELECT 1 FROM %s WHERE %s)
+`
 
 // QueuedCount returns the number of queued records matching the given conditions.
 func (s *store[T]) QueuedCount(ctx context.Context, includeProcessing bool) (_ int, err error) {

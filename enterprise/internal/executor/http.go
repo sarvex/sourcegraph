@@ -10,27 +10,28 @@ type DequeueRequest struct {
 	DiskSpace    string `json:"diskSpace,omitempty"`
 }
 
-type AddExecutionLogEntryRequest struct {
+type JobOperationRequest struct {
 	ExecutorName string `json:"executorName"`
 	JobID        int    `json:"jobId"`
+}
+
+type AddExecutionLogEntryRequest struct {
+	JobOperationRequest
 	workerutil.ExecutionLogEntry
 }
 
 type UpdateExecutionLogEntryRequest struct {
-	ExecutorName string `json:"executorName"`
-	JobID        int    `json:"jobId"`
-	EntryID      int    `json:"entryId"`
+	JobOperationRequest
+	EntryID int `json:"entryId"`
 	workerutil.ExecutionLogEntry
 }
 
 type MarkCompleteRequest struct {
-	ExecutorName string `json:"executorName"`
-	JobID        int    `json:"jobId"`
+	JobOperationRequest
 }
 
 type MarkErroredRequest struct {
-	ExecutorName string `json:"executorName"`
-	JobID        int    `json:"jobId"`
+	JobOperationRequest
 	ErrorMessage string `json:"errorMessage"`
 }
 

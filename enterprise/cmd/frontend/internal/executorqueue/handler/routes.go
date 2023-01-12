@@ -2,12 +2,15 @@ package handler
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
+	"github.com/golang-jwt/jwt/v4"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 
@@ -55,6 +58,77 @@ func SetupJobRoutes(handlers []ExecutorHandler, router *mux.Router) {
 			subRouter.Path(fmt.Sprintf("/%s", path)).Methods("POST").HandlerFunc(route)
 		}
 	}
+}
+
+func authMiddleware(next http.Handler, executorHandler ExecutorHandler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if validateJobRequest(w, r, executorHandler) {
+			next.ServeHTTP(w, r)
+		}
+	})
+}
+
+func validateJobRequest(w http.ResponseWriter, r *http.Request, executorHandler ExecutorHandler) bool {
+	var payload apiclient.JobOperationRequest
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, fmt.Sprintf("Failed to unmarshal payload: %s", err.Error()), http.StatusBadRequest)
+		return false
+	}
+
+	var authToken string
+	if headerValue := r.Header.Get("Authorization"); headerValue != "" {
+		parts := strings.Split(headerValue, " ")
+		if len(parts) != 2 {
+			http.Error(w, fmt.Sprintf(`HTTP Authorization request header value must be of the following form: '%s "TOKEN"'`, "Bearer"), http.StatusUnauthorized)
+			return false
+		}
+		if parts[0] != "Bearer" {
+			http.Error(w, fmt.Sprintf("unrecognized HTTP Authorization request header scheme (supported values: %q)", "Bearer"), http.StatusUnauthorized)
+			return false
+		}
+
+		authToken = parts[1]
+	}
+	if authToken == "" {
+		http.Error(w, "no token value in the HTTP Authorization request header (recommended) or basic auth (deprecated)", http.StatusUnauthorized)
+		return false
+	}
+
+	c := jobOperationClaims{}
+	token, err := jwt.ParseWithClaims(authToken, &c, func(token *jwt.Token) (any, error) {
+		return base64.StdEncoding.DecodeString("ZXhlY3V0b3JzLmpvYi5zaWduaW5nS2V5Cg==")
+	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS512.Name}))
+
+	if err != nil {
+		http.Error(w, "invalid token", http.StatusUnauthorized)
+		return false
+	}
+
+	if claims, ok := token.Claims.(*jobOperationClaims); ok && token.Valid {
+		if claims.AccessToken != "hunter2hunter" {
+			// TODO
+		}
+		if claims.Issuer != payload.ExecutorName {
+			// TODO
+		}
+		id, err := strconv.Atoi(claims.Subject)
+		if err != nil {
+			// TODO
+		}
+		exists, err := executorHandler.exists(r.Context(), id)
+		if err != nil {
+			// TODO
+		}
+		if !exists {
+			// TODO
+		}
+	}
+
+	if err = validateWorkerHostname(payload.ExecutorName); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return false
+	}
+	return true
 }
 
 // POST /{queueName}/dequeue
