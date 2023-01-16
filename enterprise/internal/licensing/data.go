@@ -1,7 +1,5 @@
 package licensing
 
-import "fmt"
-
 // The list of plans.
 const (
 	// PlanOldEnterpriseStarter is the old "Enterprise Starter" plan.
@@ -21,6 +19,8 @@ const (
 
 	// PlanFree0 is the default plan if no license key is set.
 	PlanFree0 Plan = "free-0"
+
+	PlanFree1 Plan = "free-1"
 )
 
 var allPlans = []Plan{
@@ -78,47 +78,11 @@ const (
 	FeatureCodeInsights BasicFeature = "code-insights"
 )
 
-// FeatureBatchChanges is whether Batch Changes on this Sourcegraph instance has been purchased.
-type FeatureBatchChanges struct {
-	// If true, there is no limit to the number of changesets that can be created.
-	Unrestricted bool
-	// Maximum number of changesets that can be created per batch change. If Unrestricted is true, this is ignored.
-	MaxNumChangesets int
-}
-
-func (*FeatureBatchChanges) FeatureName() string {
-	return "batch-changes"
-}
-
-func (f *FeatureBatchChanges) Check(info *Info) error {
-	if info == nil {
-		return NewFeatureNotActivatedError(fmt.Sprintf("The feature %q is not activated because it requires a valid Sourcegraph license. Purchase a Sourcegraph subscription to activate this feature.", f.FeatureName()))
-	}
-
-	// If the deprecated campaigns are enabled, use unrestricted batch changes
-	if FeatureCampaigns.Check(info) == nil {
-		f.Unrestricted = true
-		return nil
-	}
-
-	// If the batch changes tag exists on the license, use unrestricted batch changes
-	if info.HasTag(f.FeatureName()) {
-		f.Unrestricted = true
-		return nil
-	}
-
-	// Otherwise, check the default batch changes feature
-	if info.Plan().HasFeature(f) {
-		return nil
-	}
-
-	return NewFeatureNotActivatedError(fmt.Sprintf("The feature %q is not activated in your Sourcegraph license. Upgrade your Sourcegraph subscription to use this feature.", f.FeatureName()))
-}
-
 // planFeatures defines the features that are enabled for each plan.
 var planFeatures = map[Plan][]Feature{
 	PlanOldEnterpriseStarter: {
 		&FeatureBatchChanges{MaxNumChangesets: 10},
+		&FeaturePrivateRepositories{Unrestricted: true},
 	},
 	PlanOldEnterprise: {
 		FeatureSSO,
@@ -129,6 +93,7 @@ var planFeatures = map[Plan][]Feature{
 		FeatureBranding,
 		FeatureCampaigns,
 		&FeatureBatchChanges{Unrestricted: true},
+		&FeaturePrivateRepositories{Unrestricted: true},
 		FeatureMonitoring,
 		FeatureBackupAndRestore,
 		FeatureCodeInsights,
@@ -138,18 +103,21 @@ var planFeatures = map[Plan][]Feature{
 		FeatureExplicitPermissionsAPI,
 		FeatureSSO,
 		&FeatureBatchChanges{MaxNumChangesets: 10},
+		&FeaturePrivateRepositories{Unrestricted: true},
 	},
 	PlanEnterprise0: {
 		FeatureACLs,
 		FeatureExplicitPermissionsAPI,
 		FeatureSSO,
 		&FeatureBatchChanges{MaxNumChangesets: 10},
+		&FeaturePrivateRepositories{Unrestricted: true},
 	},
 
 	PlanBusiness0: {
 		FeatureACLs,
 		FeatureCampaigns,
 		&FeatureBatchChanges{Unrestricted: true},
+		&FeaturePrivateRepositories{Unrestricted: true},
 		FeatureCodeInsights,
 		FeatureSSO,
 	},
@@ -158,6 +126,7 @@ var planFeatures = map[Plan][]Feature{
 		FeatureCampaigns,
 		FeatureCodeInsights,
 		&FeatureBatchChanges{Unrestricted: true},
+		&FeaturePrivateRepositories{Unrestricted: true},
 		FeatureExplicitPermissionsAPI,
 		FeatureSSO,
 	},
@@ -165,5 +134,11 @@ var planFeatures = map[Plan][]Feature{
 		FeatureSSO,
 		FeatureMonitoring,
 		&FeatureBatchChanges{MaxNumChangesets: 10},
+		&FeaturePrivateRepositories{Unrestricted: true},
+	},
+	PlanFree1: {
+		FeatureMonitoring,
+		&FeatureBatchChanges{MaxNumChangesets: 10},
+		&FeaturePrivateRepositories{MaxNumPrivateRepos: 1},
 	},
 }
