@@ -110,6 +110,8 @@ func (f *FeaturePrivateRepositories) Check(info *Info) error {
 
 	// Otherwise, check the defaultprivate repositories feature
 	if info.Plan().HasFeature(f) {
+		f.Unrestricted = false
+		f.MaxNumPrivateRepos = 2
 		return nil
 	}
 
