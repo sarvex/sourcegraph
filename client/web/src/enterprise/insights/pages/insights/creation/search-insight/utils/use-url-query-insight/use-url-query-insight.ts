@@ -131,6 +131,7 @@ export function getInsightDataFromQuery(searchQuery: string | null): InsightData
 
 function createInsightFormFields(seriesQuery: string, repositories: string[] = []): Partial<CreateInsightFormFields> {
     return {
+        repositories,
         series: [
             createDefaultEditSeries({
                 edit: true,
@@ -139,6 +140,5 @@ function createInsightFormFields(seriesQuery: string, repositories: string[] = [
                 query: seriesQuery ?? '',
             }),
         ],
-        repositories: repositories.join(', '),
     }
 }

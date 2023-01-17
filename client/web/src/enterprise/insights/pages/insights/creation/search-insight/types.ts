@@ -10,7 +10,7 @@ export interface CreateInsightFormFields {
     title: string
 
     /** Repositories which to be used to get the info for code insights */
-    repositories: string
+    repositories: string[]
 
     /** Setting for set chart step - how often do we collect data. */
     step: InsightStep

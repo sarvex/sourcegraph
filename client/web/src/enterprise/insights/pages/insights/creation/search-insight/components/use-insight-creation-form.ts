@@ -8,7 +8,6 @@ import {
     EditableDataSeries,
     insightTitleValidator,
     insightRepositoriesValidator,
-    insightRepositoriesAsyncValidator,
     insightStepValueValidator,
     insightSeriesValidator,
     createDefaultEditSeries,
@@ -23,7 +22,7 @@ export const INITIAL_INSIGHT_VALUES: CreateInsightFormFields = {
     step: 'months',
     stepValue: '2',
     title: '',
-    repositories: '',
+    repositories: [],
     allRepos: false,
     dashboardReferenceCount: 0,
 }
@@ -38,7 +37,7 @@ export interface UseInsightCreationFormProps {
 export interface InsightCreationForm {
     form: Form<CreateInsightFormFields>
     title: useFieldAPI<string>
-    repositories: useFieldAPI<string>
+    repositories: useFieldAPI<string[]>
     series: useFieldAPI<EditableDataSeries[]>
     step: useFieldAPI<InsightStep>
     stepValue: useFieldAPI<string>
@@ -65,12 +64,6 @@ export function useInsightCreationForm(props: UseInsightCreationFormProps): Insi
     const allReposMode = useField({
         name: 'allRepos',
         formApi: form.formAPI,
-        onChange: (checked: boolean) => {
-            // Reset form values in case if All repos mode was activated
-            if (checked) {
-                repositories.input.onChange('')
-            }
-        },
     })
 
     const isAllReposMode = allReposMode.input.value
@@ -87,7 +80,6 @@ export function useInsightCreationForm(props: UseInsightCreationFormProps): Insi
         validators: {
             // Turn off any validations for the repositories' field in we are in all repos mode
             sync: !isAllReposMode ? insightRepositoriesValidator : undefined,
-            async: !isAllReposMode ? insightRepositoriesAsyncValidator : undefined,
         },
         disabled: isAllReposMode,
     })

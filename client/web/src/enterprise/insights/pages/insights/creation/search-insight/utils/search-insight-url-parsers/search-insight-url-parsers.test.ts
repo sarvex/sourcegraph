@@ -9,7 +9,7 @@ describe('decodeSearchInsightUrl', () => {
 
     test('should return a valid search insight initial values object', () => {
         const queryString = encodeURIComponent(
-            `?repositories=github.com/sourcegraph/sourcegraph, github.com/example/example&title=Insight title&allRepos=true&series=${JSON.stringify(
+            `?repositories=github.com/sourcegraph/sourcegraph,github.com/example/example&title=Insight title&allRepos=true&series=${JSON.stringify(
                 [
                     {
                         id: 1,
@@ -23,7 +23,7 @@ describe('decodeSearchInsightUrl', () => {
         )
 
         expect(decodeSearchInsightUrl(queryString)).toStrictEqual({
-            repositories: 'github.com/sourcegraph/sourcegraph, github.com/example/example',
+            repositories: ['github.com/sourcegraph/sourcegraph', 'github.com/example/example'],
             title: 'Insight title',
             allRepos: true,
             series: [
@@ -37,7 +37,7 @@ describe('decodeSearchInsightUrl', () => {
 describe('encodeSearchInsightUrl', () => {
     test('should encode search insight values in a way that they could be decoded with decodeUrlSearchInsight', () => {
         const encodedSearchInsightParameters = encodeSearchInsightUrl({
-            repositories: 'github.com/sourcegraph/sourcegraph, github.com/example/example',
+            repositories: ['github.com/sourcegraph/sourcegraph', 'github.com/example/example'],
             title: 'Insight title',
             allRepos: true,
             series: [
@@ -47,7 +47,7 @@ describe('encodeSearchInsightUrl', () => {
         })
 
         expect(decodeSearchInsightUrl(encodedSearchInsightParameters)).toStrictEqual({
-            repositories: 'github.com/sourcegraph/sourcegraph, github.com/example/example',
+            repositories: ['github.com/sourcegraph/sourcegraph', 'github.com/example/example'],
             title: 'Insight title',
             allRepos: true,
             series: [

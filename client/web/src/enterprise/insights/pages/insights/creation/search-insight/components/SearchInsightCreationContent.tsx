@@ -50,7 +50,7 @@ export const SearchInsightCreationContent: FC<SearchInsightCreationContentProps>
     const handleFormReset = (): void => {
         // TODO [VK] Change useForm API in order to implement form.reset method.
         title.input.onChange('')
-        repositories.input.onChange('')
+        repositories.input.onChange([])
         // Focus first element of the form
         repositories.input.ref.current?.focus()
         series.input.onChange([createDefaultEditSeries({ edit: true })])
@@ -69,7 +69,7 @@ export const SearchInsightCreationContent: FC<SearchInsightCreationContentProps>
 
     const hasFilledValue =
         values.series?.some(line => line.name !== '' || line.query !== '') ||
-        values.repositories !== '' ||
+        values.repositories.length > 0 ||
         values.title !== ''
 
     return (

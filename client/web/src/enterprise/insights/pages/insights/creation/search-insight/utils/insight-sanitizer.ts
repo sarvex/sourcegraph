@@ -1,5 +1,5 @@
 import { SeriesSortDirection, SeriesSortMode } from '../../../../../../../graphql-operations'
-import { getSanitizedRepositories, getSanitizedSeries } from '../../../../../components'
+import { getSanitizedSeries } from '../../../../../components'
 import { MAX_NUMBER_OF_SERIES } from '../../../../../constants'
 import { MinimalSearchBasedInsightData, InsightExecutionType, InsightType } from '../../../../../core'
 import { CreateInsightFormFields } from '../types'
@@ -37,7 +37,7 @@ export function getSanitizedSearchInsight(rawInsight: CreateInsightFormFields): 
         executionType: InsightExecutionType.Backend,
         type: InsightType.SearchBased,
         title: rawInsight.title,
-        repositories: getSanitizedRepositories(rawInsight.repositories),
+        repositories: rawInsight.repositories,
         series: getSanitizedSeries(rawInsight.series),
         step: { [rawInsight.step]: +rawInsight.stepValue },
         dashboards: [],

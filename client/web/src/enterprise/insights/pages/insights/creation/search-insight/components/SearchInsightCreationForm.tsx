@@ -1,6 +1,6 @@
 import { FC, FormEventHandler, ReactNode, FormHTMLAttributes } from 'react'
 
-import { Checkbox, Input, Link } from '@sourcegraph/wildcard'
+import { Checkbox, Input, Link, Label } from '@sourcegraph/wildcard'
 
 import {
     FormSeries,
@@ -65,6 +65,7 @@ export const SearchInsightCreationForm: FC<CreationSearchInsightFormProps> = pro
     } = props
 
     const { licensed } = useUiFeatures()
+    const { value: repositoriesValue, ...repositoriesAttributes } = getDefaultInputProps(repositories)
 
     return (
         // eslint-disable-next-line react/forbid-elements
@@ -74,17 +75,15 @@ export const SearchInsightCreationForm: FC<CreationSearchInsightFormProps> = pro
                 title="Targeted repositories"
                 subtitle="Create a list of repositories to run your search over"
             >
-                <Input
-                    as={RepositoriesField}
+                <Label htmlFor="repositories-id">Repositories</Label>
+                <RepositoriesField
+                    id="repositories-id"
                     autoFocus={true}
                     required={true}
-                    label="Repositories"
-                    message="Separate repositories with commas"
-                    placeholder={
-                        allReposMode.input.value ? 'All repositories' : 'Example: github.com/sourcegraph/sourcegraph'
-                    }
-                    className="mb-0 d-flex flex-column"
-                    {...getDefaultInputProps(repositories)}
+                    description="Find and choose up to 1 repository to run insight"
+                    placeholder={allReposMode.input.value ? 'All repositories' : 'Search repositories...'}
+                    value={allReposMode.input.value ? [] : repositoriesValue}
+                    {...repositoriesAttributes}
                 />
 
                 <Checkbox
