@@ -11,7 +11,6 @@ import {
     SubmissionErrors,
     useForm,
     insightRepositoriesValidator,
-    insightRepositoriesAsyncValidator,
 } from '../../../../../components'
 import { LineChartLivePreview } from '../../LineChartLivePreview'
 import { CaptureGroupFormFields } from '../types'
@@ -20,7 +19,7 @@ import { CaptureGroupCreationForm, RenderPropertyInputs } from './CaptureGoupCre
 import { QUERY_VALIDATORS, STEP_VALIDATORS, TITLE_VALIDATORS } from './validators'
 
 const INITIAL_VALUES: CaptureGroupFormFields = {
-    repositories: '',
+    repositories: [],
     groupSearchQuery: '',
     title: '',
     step: 'months',
@@ -58,12 +57,6 @@ export const CaptureGroupCreationContent: FC<CaptureGroupCreationContentProps> =
     const allReposMode = useField({
         name: 'allRepos',
         formApi: form.formAPI,
-        onChange: (checked: boolean) => {
-            // Reset form values in case if All repos mode was activated
-            if (checked) {
-                repositories.input.onChange('')
-            }
-        },
     })
 
     const repositories = useField({
@@ -72,7 +65,6 @@ export const CaptureGroupCreationContent: FC<CaptureGroupCreationContentProps> =
         validators: {
             // Turn off any validations for the repositories' field in we are in all repos mode
             sync: !allReposMode.input.value ? insightRepositoriesValidator : undefined,
-            async: !allReposMode.input.value ? insightRepositoriesAsyncValidator : undefined,
         },
         disabled: allReposMode.input.value,
     })
@@ -96,7 +88,7 @@ export const CaptureGroupCreationContent: FC<CaptureGroupCreationContentProps> =
 
     const handleFormReset = (): void => {
         title.input.onChange('')
-        repositories.input.onChange('')
+        repositories.input.onChange([])
         query.input.onChange('')
         step.input.onChange('months')
         stepValue.input.onChange('1')
@@ -106,7 +98,7 @@ export const CaptureGroupCreationContent: FC<CaptureGroupCreationContentProps> =
     }
 
     const hasFilledValue =
-        form.values.title !== '' || form.values.repositories !== '' || form.values.groupSearchQuery !== ''
+        form.values.title !== '' || form.values.repositories.length > 0 || form.values.groupSearchQuery !== ''
 
     const areAllFieldsForPreviewValid =
         repositories.meta.validState === 'VALID' &&

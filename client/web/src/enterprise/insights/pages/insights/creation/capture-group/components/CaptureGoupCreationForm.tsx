@@ -66,6 +66,7 @@ export const CaptureGroupCreationForm: FC<CaptureGroupCreationFormProps> = props
         formAPI: { submitErrors, submitting },
     } = form
     const { licensed } = useUiFeatures()
+    const { value: repositoriesValue, ...repositoriesAttributes } = getDefaultInputProps(repositories)
 
     return (
         // eslint-disable-next-line react/forbid-elements
@@ -75,15 +76,15 @@ export const CaptureGroupCreationForm: FC<CaptureGroupCreationFormProps> = props
                 title="Targeted repositories"
                 subtitle="Create a list of repositories to run your search over"
             >
-                <Input
-                    as={RepositoriesField}
+                <Label htmlFor="repositories-id">Repositories</Label>
+                <RepositoriesField
+                    id="repositories-id"
                     autoFocus={true}
                     required={true}
-                    label="Repositories"
-                    message="Separate repositories with commas"
-                    placeholder="Example: github.com/sourcegraph/sourcegraph"
-                    {...getDefaultInputProps(repositories)}
-                    className="mb-0 d-flex flex-column"
+                    description="Find and choose up to 1 repository to run insight"
+                    placeholder={allReposMode.input.value ? 'All repositories' : 'Search repositories...'}
+                    value={allReposMode.input.value ? [] : repositoriesValue}
+                    {...repositoriesAttributes}
                 />
 
                 <Checkbox
