@@ -13,7 +13,6 @@ import {
     LivePreviewBlurBackdrop,
     LivePreviewBanner,
     LivePreviewLegend,
-    getSanitizedRepositories,
     SERIES_MOCK_CHART,
 } from '../../../components'
 import { useLivePreviewSeriesInsight, LivePreviewStatus } from '../../../core/hooks/live-preview-insight'
@@ -30,7 +29,7 @@ export interface LivePreviewSeries {
 
 interface LineChartLivePreviewProps extends HTMLAttributes<HTMLElement> {
     disabled: boolean
-    repositories: string
+    repositories: string[]
     stepValue: string
     step: InsightStep
     isAllReposMode: boolean
@@ -43,7 +42,8 @@ export const LineChartLivePreview: FC<LineChartLivePreviewProps> = props => {
 
     const settings = useDebounce(
         useDeepMemo({
-            repositories: getSanitizedRepositories(repositories),
+            disabled,
+            repositories,
             step: { [step]: stepValue },
             series: series.map(srs => {
                 const sanitizer = srs.generatedFromCaptureGroup
@@ -62,7 +62,10 @@ export const LineChartLivePreview: FC<LineChartLivePreviewProps> = props => {
     )
 
     const { state, refetch } = useLivePreviewSeriesInsight({
-        skip: disabled,
+        // If disabled false then rely on debounced settings.disabled
+        // because we don't want to run live preview before debounced will be updated
+        // if disabled true then disable live preview immediately
+        skip: disabled || settings.disabled,
         ...settings,
     })
 
