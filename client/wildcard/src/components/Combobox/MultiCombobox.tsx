@@ -86,6 +86,7 @@ export interface MultiComboboxProps<T> extends Omit<ComboboxProps, 'onSelect'> {
     getItemName: (item: T) => string
     getItemKey: (item: T) => string | number
     onSelectedItemsChange: (selectedItems: T[]) => void
+    children: ReactNode | ReactNode[]
 }
 
 export function MultiCombobox<T>(props: MultiComboboxProps<T>): ReactElement {
@@ -96,9 +97,13 @@ export function MultiCombobox<T>(props: MultiComboboxProps<T>): ReactElement {
     const [isPopoverOpen, setPopoverState] = useState<boolean>(false)
     const [inputElement, setInputElement] = useState<HTMLElement | null>(null)
 
-    const setSuggestOptions = useCallback((items: T[]) => {
-        suggestItemsRef.current = items
-    }, [])
+    const setSuggestOptions = useCallback(
+        (items: T[]) => {
+            suggestItemsRef.current = items
+            tether?.forceUpdate()
+        },
+        [tether]
+    )
 
     const handleSelectedItemsChange = useCallback(
         (items: T[]): void => {
@@ -186,7 +191,7 @@ interface MultiValueInputProps extends InputHTMLAttributes<HTMLInputElement> {
 // Forward ref doesn't support function components with generic,
 // so we have to cast a proper FC types with generic props
 const MultiValueInput = forwardRef((props: MultiValueInputProps, ref: Ref<HTMLInputElement>) => {
-    const { onKeyDown, onFocus, onBlur, byPassValue, value, ...attributes } = props
+    const { onKeyDown, onFocus, onBlur, byPassValue, value, className, ...attributes } = props
 
     const {
         setInputElement,
@@ -211,6 +216,7 @@ const MultiValueInput = forwardRef((props: MultiValueInputProps, ref: Ref<HTMLIn
         }
 
         if (event.key === Key.Enter) {
+            event.preventDefault()
             onItemSelect(navigationValue)
 
             // Prevent any single combobox UI state machine updates
@@ -269,7 +275,7 @@ const MultiValueInput = forwardRef((props: MultiValueInputProps, ref: Ref<HTMLIn
                 {...attributes}
                 value={byPassValue}
                 ref={inputRef}
-                className={styles.inputContainer}
+                className={classNames(className, styles.inputContainer)}
                 inputClassName={styles.input}
                 onKeyDown={handleKeyDown}
                 onFocus={handleFocus}
