@@ -57,20 +57,34 @@ func SetupJobRoutes(handlers []ExecutorHandler, router *mux.Router) {
 		for path, route := range routes {
 			subRouter.Path(fmt.Sprintf("/%s", path)).Methods("POST").HandlerFunc(route)
 		}
+		// Setup auth on the endpoints
+		subRouter.Use(authMiddleware(h))
 	}
 }
 
-func authMiddleware(next http.Handler, executorHandler ExecutorHandler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if validateJobRequest(w, r, executorHandler) {
-			next.ServeHTTP(w, r)
-		}
-	})
+func authMiddleware(executorHandler ExecutorHandler) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if validateJobRequest(w, r, executorHandler) {
+				next.ServeHTTP(w, r)
+			}
+		})
+	}
 }
 
 func validateJobRequest(w http.ResponseWriter, r *http.Request, executorHandler ExecutorHandler) bool {
+	// Read the body and re-set the body, so we can parse the request payload.
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		// TODO
+		http.Error(w, fmt.Sprintf("failed: %s", err.Error()), http.StatusInternalServerError)
+		return false
+	}
+	r.Body = io.NopCloser(bytes.NewBuffer(body))
+
 	var payload apiclient.JobOperationRequest
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+	if err := json.Unmarshal(body, &payload); err != nil {
+		// TODO
 		http.Error(w, fmt.Sprintf("Failed to unmarshal payload: %s", err.Error()), http.StatusBadRequest)
 		return false
 	}
@@ -79,10 +93,12 @@ func validateJobRequest(w http.ResponseWriter, r *http.Request, executorHandler 
 	if headerValue := r.Header.Get("Authorization"); headerValue != "" {
 		parts := strings.Split(headerValue, " ")
 		if len(parts) != 2 {
+			// TODO
 			http.Error(w, fmt.Sprintf(`HTTP Authorization request header value must be of the following form: '%s "TOKEN"'`, "Bearer"), http.StatusUnauthorized)
 			return false
 		}
 		if parts[0] != "Bearer" {
+			// TODO
 			http.Error(w, fmt.Sprintf("unrecognized HTTP Authorization request header scheme (supported values: %q)", "Bearer"), http.StatusUnauthorized)
 			return false
 		}
@@ -90,6 +106,7 @@ func validateJobRequest(w http.ResponseWriter, r *http.Request, executorHandler 
 		authToken = parts[1]
 	}
 	if authToken == "" {
+		// TODO
 		http.Error(w, "no token value in the HTTP Authorization request header (recommended) or basic auth (deprecated)", http.StatusUnauthorized)
 		return false
 	}
@@ -100,6 +117,7 @@ func validateJobRequest(w http.ResponseWriter, r *http.Request, executorHandler 
 	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS512.Name}))
 
 	if err != nil {
+		// TODO
 		http.Error(w, "invalid token", http.StatusUnauthorized)
 		return false
 	}
@@ -107,23 +125,34 @@ func validateJobRequest(w http.ResponseWriter, r *http.Request, executorHandler 
 	if claims, ok := token.Claims.(*jobOperationClaims); ok && token.Valid {
 		if claims.AccessToken != "hunter2hunter" {
 			// TODO
+			http.Error(w, "invalid token", http.StatusUnauthorized)
+			return false
 		}
 		if claims.Issuer != payload.ExecutorName {
 			// TODO
+			http.Error(w, "invalid token", http.StatusUnauthorized)
+			return false
 		}
 		id, err := strconv.Atoi(claims.Subject)
 		if err != nil {
 			// TODO
+			http.Error(w, "invalid token", http.StatusUnauthorized)
+			return false
 		}
 		exists, err := executorHandler.exists(r.Context(), id)
 		if err != nil {
 			// TODO
+			http.Error(w, "invalid token", http.StatusUnauthorized)
+			return false
 		}
 		if !exists {
 			// TODO
+			http.Error(w, "invalid token", http.StatusUnauthorized)
+			return false
 		}
 	}
 
+	// Since the payload partially deserialize, ensure the worker hostname is valid.
 	if err = validateWorkerHostname(payload.ExecutorName); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return false
