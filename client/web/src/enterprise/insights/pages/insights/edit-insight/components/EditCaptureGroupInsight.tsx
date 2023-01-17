@@ -28,7 +28,7 @@ export const EditCaptureGroupInsight: React.FunctionComponent<
     const insightFormValues = useMemo<CaptureGroupFormFields>(
         () => ({
             title: insight.title,
-            repositories: insight.repositories.join(', '),
+            repositories: insight.repositories,
             groupSearchQuery: insight.query,
             stepValue: Object.values(insight.step)[0]?.toString() ?? '3',
             step: Object.keys(insight.step)[0] as InsightStep,
