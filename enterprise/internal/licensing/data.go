@@ -32,6 +32,7 @@ var allPlans = []Plan{
 	PlanBusiness0,
 	PlanEnterprise1,
 	PlanFree0,
+	PlanFree1,
 }
 
 // The list of features. For each feature, add a new const here and the checking logic in
