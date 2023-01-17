@@ -13,11 +13,11 @@ import styles from './InsightQueryInput.module.scss'
 
 export interface InsightQueryInputProps extends MonacoFieldProps {
     patternType: SearchPatternType
-    repositories?: string
+    repositories?: string[]
 }
 
 export const InsightQueryInput = forwardRef<HTMLInputElement, InsightQueryInputProps>((props, reference) => {
-    const { children, patternType, repositories = '', ...otherProps } = props
+    const { children, patternType, repositories = [], ...otherProps } = props
     const previewQuery = `${generateRepoFiltersQuery(repositories)} ${props.value}`.trim()
 
     return (

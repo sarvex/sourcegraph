@@ -3,7 +3,8 @@ import { InputStatus, InputProps } from '@sourcegraph/wildcard'
 import { useFieldAPI } from './hooks'
 
 function getDefaultInputStatus<T>({ meta }: useFieldAPI<T>): InputStatus {
-    const isValidated = meta.initialValue || meta.touched
+    const hasInitialValue = Array.isArray(meta.initialValue) ? meta.initialValue.length : meta.initialValue
+    const isValidated = hasInitialValue || meta.touched
 
     if (meta.validState === 'CHECKING') {
         return InputStatus.loading
