@@ -82,13 +82,15 @@ func validateJobRequest(w http.ResponseWriter, r *http.Request, executorHandler 
 	}
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
+	// Every job requests has the basics. Parse out the info we need to see whether the request is valid/authenticated.
 	var payload apiclient.JobOperationRequest
 	if err := json.Unmarshal(body, &payload); err != nil {
-		log15.Error("Failed to read parse request body", "err", err)
+		log15.Error("failed to read parse request body", "err", err)
 		http.Error(w, "Failed to read parse request body", http.StatusBadRequest)
 		return false
 	}
 
+	// Get the auth token from the Authorization header.
 	var authToken string
 	if headerValue := r.Header.Get("Authorization"); headerValue != "" {
 		parts := strings.Split(headerValue, " ")
@@ -108,6 +110,7 @@ func validateJobRequest(w http.ResponseWriter, r *http.Request, executorHandler 
 		return false
 	}
 
+	// Parse the provided JWT token with the key.
 	c := jobOperationClaims{}
 	token, err := jwt.ParseWithClaims(authToken, &c, func(token *jwt.Token) (any, error) {
 		return base64.StdEncoding.DecodeString("ZXhlY3V0b3JzLmpvYi5zaWduaW5nS2V5Cg==")
@@ -119,23 +122,34 @@ func validateJobRequest(w http.ResponseWriter, r *http.Request, executorHandler 
 		return false
 	}
 
+	// Time to go to work on the provided token.
 	if claims, ok := token.Claims.(*jobOperationClaims); ok && token.Valid {
+		// Make sure the request has the general executor access token.
 		if claims.AccessToken != "hunter2hunter" {
 			log15.Error("claims access token does not match the executor access token")
 			http.Error(w, "invalid token", http.StatusUnauthorized)
 			return false
 		}
+		// Ensure the token the request was generated for is coming for the correct executor instance.
 		if claims.Issuer != payload.ExecutorName {
 			log15.Error("executor name does not match claims Issuer")
 			http.Error(w, "invalid token", http.StatusUnauthorized)
 			return false
 		}
+		// Parse the job ID from the claims.
 		id, err := strconv.Atoi(claims.Subject)
 		if err != nil {
 			log15.Error("failed to claim Subject to integer", "err", err)
 			http.Error(w, "invalid token", http.StatusUnauthorized)
 			return false
 		}
+		// Ensure the job matches the payload
+		if id != payload.JobID {
+			log15.Error("job ID does not match claims Subject")
+			http.Error(w, "invalid token", http.StatusUnauthorized)
+			return false
+		}
+		// Ensure the job even exists.
 		exists, err := executorHandler.exists(r.Context(), id)
 		if err != nil {
 			log15.Error("failed to determine if job exists", "err", err)
