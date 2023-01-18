@@ -129,25 +129,28 @@ func (h *handler[T]) dequeue(ctx context.Context, metadata executorMetadata) (_ 
 		job.Version = 2
 	}
 
-	token, err := newJobToken(metadata.Name, job.ID)
-	if err != nil {
-		return apiclient.Job{}, false, errors.Wrap(err, "Job Token")
+	if len(conf.SiteConfig().Executors.Job.AccessToken.SigningKey) > 0 {
+		token, err := newJobToken(metadata.Name, job.ID)
+		if err != nil {
+			return apiclient.Job{}, false, errors.Wrap(err, "Job Token")
+		}
+		job.Token = token
 	}
-	job.Token = token
 
 	return job, true, nil
 }
 
 func newJobToken(hostname string, jobId int) (string, error) {
+	expiry := time.Now().Add(time.Minute * time.Duration(conf.SiteConfig().Executors.Job.AccessToken.Expiry))
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jobOperationClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    hostname,
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)), // TODO
+			ExpiresAt: jwt.NewNumericDate(expiry),
 			Subject:   strconv.FormatInt(int64(jobId), 10),
 		},
 		AccessToken: conf.SiteConfig().ExecutorsAccessToken,
 	})
-	decodedSigningKey, err := base64.StdEncoding.DecodeString("ZXhlY3V0b3JzLmpvYi5zaWduaW5nS2V5Cg==")
+	decodedSigningKey, err := base64.StdEncoding.DecodeString(conf.SiteConfig().Executors.Job.AccessToken.SigningKey)
 	if err != nil {
 		return "", err
 	}

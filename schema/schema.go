@@ -54,6 +54,14 @@ type AWSKMSEncryptionKey struct {
 	Type            string `json:"type"`
 }
 
+// AccessToken description: Configuration for Job Access Tokens
+type AccessToken struct {
+	// Expiry description: Validity expressed in minutes of the unlock account token
+	Expiry int `json:"expiry,omitempty"`
+	// SigningKey description: Base64-encoded HMAC signing key to sign the JWT token for account unlock URLs
+	SigningKey string `json:"signingKey,omitempty"`
+}
+
 // ApiRatelimit description: Configuration for API rate limiting
 type ApiRatelimit struct {
 	// Enabled description: Whether API rate limiting is enabled
@@ -636,6 +644,12 @@ type ExcludedGitoliteRepo struct {
 	Name string `json:"name,omitempty"`
 	// Pattern description: Regular expression which matches against the name of a Gitolite repo to exclude from mirroring.
 	Pattern string `json:"pattern,omitempty"`
+}
+
+// Executors description: Configuration for executors
+type Executors struct {
+	// Job description: Configuration for job
+	Job *Job `json:"job,omitempty"`
 }
 type ExistingChangesetSpec struct {
 	// BaseRepository description: The GraphQL ID of the repository that contains the existing changeset on the code host.
@@ -1245,6 +1259,12 @@ type InsightSeries struct {
 type JVMPackagesConnection struct {
 	// Maven description: Configuration for resolving from Maven repositories.
 	Maven *Maven `json:"maven,omitempty"`
+}
+
+// Job description: Configuration for job
+type Job struct {
+	// AccessToken description: Configuration for Job Access Tokens
+	AccessToken *AccessToken `json:"accessToken,omitempty"`
 }
 
 // Log description: Configuration for logging and alerting, including to external services.
@@ -2344,6 +2364,8 @@ type SiteConfiguration struct {
 	EmailTemplates *EmailTemplates `json:"email.templates,omitempty"`
 	// EncryptionKeys description: Configuration for encryption keys used to encrypt data at rest in the database.
 	EncryptionKeys *EncryptionKeys `json:"encryption.keys,omitempty"`
+	// Executors description: Configuration for executors
+	Executors *Executors `json:"executors,omitempty"`
 	// ExecutorsAccessToken description: The shared secret between Sourcegraph and executors.
 	ExecutorsAccessToken string `json:"executors.accessToken,omitempty"`
 	// ExecutorsBatcheshelperImage description: The image to use for batch changes in executors. Use this value to pull from a custom image registry.
@@ -2542,6 +2564,7 @@ func (v *SiteConfiguration) UnmarshalJSON(data []byte) error {
 	delete(m, "email.smtp")
 	delete(m, "email.templates")
 	delete(m, "encryption.keys")
+	delete(m, "executors")
 	delete(m, "executors.accessToken")
 	delete(m, "executors.batcheshelperImage")
 	delete(m, "executors.batcheshelperImageTag")
