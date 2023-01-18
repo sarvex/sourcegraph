@@ -12,6 +12,7 @@ import (
 	"github.com/sourcegraph/log"
 
 	apiclient "github.com/sourcegraph/sourcegraph/enterprise/internal/executor"
+	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	metricsstore "github.com/sourcegraph/sourcegraph/internal/metrics/store"
 	"github.com/sourcegraph/sourcegraph/internal/types"
@@ -144,8 +145,7 @@ func newJobToken(hostname string, jobId int) (string, error) {
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)), // TODO
 			Subject:   strconv.FormatInt(int64(jobId), 10),
 		},
-		// TODO
-		AccessToken: "hunter2hunter",
+		AccessToken: conf.SiteConfig().ExecutorsAccessToken,
 	})
 	decodedSigningKey, err := base64.StdEncoding.DecodeString("ZXhlY3V0b3JzLmpvYi5zaWduaW5nS2V5Cg==")
 	if err != nil {
