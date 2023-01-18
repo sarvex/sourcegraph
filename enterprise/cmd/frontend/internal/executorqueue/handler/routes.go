@@ -21,6 +21,7 @@ import (
 	"github.com/sourcegraph/log"
 
 	apiclient "github.com/sourcegraph/sourcegraph/enterprise/internal/executor"
+	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
@@ -91,15 +92,19 @@ func validateJobRequest(w http.ResponseWriter, r *http.Request, executorHandler 
 	}
 
 	// Get the auth token from the Authorization header.
+	var tokenType string
 	var authToken string
 	if headerValue := r.Header.Get("Authorization"); headerValue != "" {
 		parts := strings.Split(headerValue, " ")
 		if len(parts) != 2 {
-			http.Error(w, fmt.Sprintf(`HTTP Authorization request header value must be of the following form: '%s "TOKEN"'`, "Bearer"), http.StatusUnauthorized)
+			http.Error(w, fmt.Sprintf(`HTTP Authorization request header value must be of the following form: '%s "TOKEN"' or '%s TOKEN'`, "Bearer", "token-executor"), http.StatusUnauthorized)
 			return false
 		}
-		if parts[0] != "Bearer" {
-			http.Error(w, fmt.Sprintf("unrecognized HTTP Authorization request header scheme (supported values: %q)", "Bearer"), http.StatusUnauthorized)
+		// Check what the token type is. For backwards compatibility sake, we should also accept the general executor
+		// access token.
+		tokenType = parts[0]
+		if tokenType != "Bearer" && tokenType != "token-executor" {
+			http.Error(w, fmt.Sprintf("unrecognized HTTP Authorization request header scheme (supported values: %q, %q)", "Bearer", "token-executor"), http.StatusUnauthorized)
 			return false
 		}
 
@@ -108,6 +113,18 @@ func validateJobRequest(w http.ResponseWriter, r *http.Request, executorHandler 
 	if authToken == "" {
 		http.Error(w, "no token value in the HTTP Authorization request header", http.StatusUnauthorized)
 		return false
+	}
+
+	accessToken := conf.SiteConfig().ExecutorsAccessToken
+
+	// If the general executor access token was provided, simply check the value.
+	if tokenType == "token-executor" {
+		if authToken == accessToken {
+			return true
+		} else {
+			w.WriteHeader(http.StatusForbidden)
+			return false
+		}
 	}
 
 	// Parse the provided JWT token with the key.
@@ -125,28 +142,28 @@ func validateJobRequest(w http.ResponseWriter, r *http.Request, executorHandler 
 	// Time to go to work on the provided token.
 	if claims, ok := token.Claims.(*jobOperationClaims); ok && token.Valid {
 		// Make sure the request has the general executor access token.
-		if claims.AccessToken != "hunter2hunter" {
+		if claims.AccessToken != accessToken {
 			log15.Error("claims access token does not match the executor access token")
-			http.Error(w, "invalid token", http.StatusUnauthorized)
+			w.WriteHeader(http.StatusForbidden)
 			return false
 		}
 		// Ensure the token the request was generated for is coming for the correct executor instance.
 		if claims.Issuer != payload.ExecutorName {
 			log15.Error("executor name does not match claims Issuer")
-			http.Error(w, "invalid token", http.StatusUnauthorized)
+			w.WriteHeader(http.StatusForbidden)
 			return false
 		}
 		// Parse the job ID from the claims.
 		id, err := strconv.Atoi(claims.Subject)
 		if err != nil {
 			log15.Error("failed to claim Subject to integer", "err", err)
-			http.Error(w, "invalid token", http.StatusUnauthorized)
+			w.WriteHeader(http.StatusForbidden)
 			return false
 		}
 		// Ensure the job matches the payload
 		if id != payload.JobID {
 			log15.Error("job ID does not match claims Subject")
-			http.Error(w, "invalid token", http.StatusUnauthorized)
+			w.WriteHeader(http.StatusForbidden)
 			return false
 		}
 		// Ensure the job even exists.
@@ -158,7 +175,7 @@ func validateJobRequest(w http.ResponseWriter, r *http.Request, executorHandler 
 		}
 		if !exists {
 			log15.Error("job does not exist")
-			http.Error(w, "invalid token", http.StatusUnauthorized)
+			w.WriteHeader(http.StatusForbidden)
 			return false
 		}
 	}
