@@ -2,6 +2,7 @@ import { Redirect } from 'react-router'
 
 import { lazyComponent } from '@sourcegraph/shared/src/util/lazyComponent'
 
+import { SiteAdminRolesPageProps } from './SiteAdminRolesPage'
 import { siteAdminAreaRoutes } from '../../site-admin/routes'
 import { SiteAdminAreaRoute } from '../../site-admin/SiteAdminArea'
 import { SHOW_BUSINESS_FEATURES } from '../dotcom/productSubscriptions/features'
@@ -188,7 +189,10 @@ export const enterpriseSiteAdminAreaRoutes: readonly SiteAdminAreaRoute[] = (
         {
             path: '/roles',
             exact: true,
-            render: () => <p>Roles</p>
+            render: () => lazyComponent<SiteAdminRolesPageProps, 'RolesSiteAdminPage'>(
+                () => import('./SiteAdminRolesPage'),
+                'RolesSiteAdminPage'
+            )
         }
     ] as readonly (SiteAdminAreaRoute | undefined)[]
 ).filter(Boolean) as readonly SiteAdminAreaRoute[]
