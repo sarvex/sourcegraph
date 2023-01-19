@@ -1,4 +1,4 @@
-package queue
+package queue_test
 
 import (
 	"context"
@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcegraph/sourcegraph/enterprise/cmd/executor/internal/apiclient"
+	"github.com/sourcegraph/sourcegraph/enterprise/cmd/executor/internal/apiclient/queue"
 	"github.com/sourcegraph/sourcegraph/enterprise/internal/executor"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
 	"github.com/sourcegraph/sourcegraph/internal/workerutil"
@@ -32,7 +33,7 @@ func TestDequeue(t *testing.T) {
 		responsePayload:  `{"id": 42}`,
 	}
 
-	testRoute(t, spec, func(client *Client) {
+	testRoute(t, spec, func(client *queue.Client) {
 		var job executor.Job
 		dequeued, err := client.Dequeue(context.Background(), "test_queue", &job)
 		if err != nil {
@@ -58,7 +59,7 @@ func TestDequeueNoRecord(t *testing.T) {
 		responsePayload:  ``,
 	}
 
-	testRoute(t, spec, func(client *Client) {
+	testRoute(t, spec, func(client *queue.Client) {
 		dequeued, err := client.Dequeue(context.Background(), "test_queue", nil)
 		if err != nil {
 			t.Fatalf("unexpected error dequeueing record: %s", err)
@@ -80,7 +81,7 @@ func TestDequeueBadResponse(t *testing.T) {
 		responsePayload:  ``,
 	}
 
-	testRoute(t, spec, func(client *Client) {
+	testRoute(t, spec, func(client *queue.Client) {
 		if _, err := client.Dequeue(context.Background(), "test_queue", nil); err == nil {
 			t.Fatalf("expected an error")
 		}
@@ -101,7 +102,7 @@ func TestAddExecutionLogEntry(t *testing.T) {
 		expectedMethod:   "POST",
 		expectedPath:     "/.executors/queue/test_queue/addExecutionLogEntry",
 		expectedUsername: "test",
-		expectedToken:    "hunter2",
+		expectedToken:    "job-token",
 		expectedPayload: `{
 			"executorName": "deadbeef",
 			"jobId": 42,
@@ -116,8 +117,8 @@ func TestAddExecutionLogEntry(t *testing.T) {
 		responsePayload: `99`,
 	}
 
-	testRoute(t, spec, func(client *Client) {
-		entryID, err := client.AddExecutionLogEntry(context.Background(), "test_queue", 42, entry)
+	testRoute(t, spec, func(client *queue.Client) {
+		entryID, err := client.AddExecutionLogEntry(context.Background(), "job-token", "test_queue", 42, entry)
 		if err != nil {
 			t.Fatalf("unexpected error updating log contents: %s", err)
 		}
@@ -141,7 +142,7 @@ func TestAddExecutionLogEntryBadResponse(t *testing.T) {
 		expectedMethod:   "POST",
 		expectedPath:     "/.executors/queue/test_queue/addExecutionLogEntry",
 		expectedUsername: "test",
-		expectedToken:    "hunter2",
+		expectedToken:    "job-token",
 		expectedPayload: `{
 			"executorName": "deadbeef",
 			"jobId": 42,
@@ -156,8 +157,8 @@ func TestAddExecutionLogEntryBadResponse(t *testing.T) {
 		responsePayload: ``,
 	}
 
-	testRoute(t, spec, func(client *Client) {
-		if _, err := client.AddExecutionLogEntry(context.Background(), "test_queue", 42, entry); err == nil {
+	testRoute(t, spec, func(client *queue.Client) {
+		if _, err := client.AddExecutionLogEntry(context.Background(), "job-token", "test_queue", 42, entry); err == nil {
 			t.Fatalf("expected an error")
 		}
 	})
@@ -177,7 +178,7 @@ func TestUpdateExecutionLogEntry(t *testing.T) {
 		expectedMethod:   "POST",
 		expectedPath:     "/.executors/queue/test_queue/updateExecutionLogEntry",
 		expectedUsername: "test",
-		expectedToken:    "hunter2",
+		expectedToken:    "job-token",
 		expectedPayload: `{
 			"executorName": "deadbeef",
 			"jobId": 42,
@@ -193,8 +194,8 @@ func TestUpdateExecutionLogEntry(t *testing.T) {
 		responsePayload: ``,
 	}
 
-	testRoute(t, spec, func(client *Client) {
-		if err := client.UpdateExecutionLogEntry(context.Background(), "test_queue", 42, 99, entry); err != nil {
+	testRoute(t, spec, func(client *queue.Client) {
+		if err := client.UpdateExecutionLogEntry(context.Background(), "job-token", "test_queue", 42, 99, entry); err != nil {
 			t.Fatalf("unexpected error updating log contents: %s", err)
 		}
 	})
@@ -214,7 +215,7 @@ func TestUpdateExecutionLogEntryBadResponse(t *testing.T) {
 		expectedMethod:   "POST",
 		expectedPath:     "/.executors/queue/test_queue/updateExecutionLogEntry",
 		expectedUsername: "test",
-		expectedToken:    "hunter2",
+		expectedToken:    "job-token",
 		expectedPayload: `{
 			"executorName": "deadbeef",
 			"jobId": 42,
@@ -230,8 +231,8 @@ func TestUpdateExecutionLogEntryBadResponse(t *testing.T) {
 		responsePayload: ``,
 	}
 
-	testRoute(t, spec, func(client *Client) {
-		if err := client.UpdateExecutionLogEntry(context.Background(), "test_queue", 42, 99, entry); err == nil {
+	testRoute(t, spec, func(client *queue.Client) {
+		if err := client.UpdateExecutionLogEntry(context.Background(), "job-token", "test_queue", 42, 99, entry); err == nil {
 			t.Fatalf("expected an error")
 		}
 	})
@@ -248,7 +249,7 @@ func TestMarkComplete(t *testing.T) {
 		responsePayload:  ``,
 	}
 
-	testRoute(t, spec, func(client *Client) {
+	testRoute(t, spec, func(client *queue.Client) {
 		if err := client.MarkComplete(context.Background(), "test_queue", 42); err != nil {
 			t.Fatalf("unexpected error completing job: %s", err)
 		}
@@ -266,7 +267,7 @@ func TestMarkCompleteBadResponse(t *testing.T) {
 		responsePayload:  ``,
 	}
 
-	testRoute(t, spec, func(client *Client) {
+	testRoute(t, spec, func(client *queue.Client) {
 		if err := client.MarkComplete(context.Background(), "test_queue", 42); err == nil {
 			t.Fatalf("expected an error")
 		}
@@ -284,7 +285,7 @@ func TestMarkErrored(t *testing.T) {
 		responsePayload:  ``,
 	}
 
-	testRoute(t, spec, func(client *Client) {
+	testRoute(t, spec, func(client *queue.Client) {
 		if err := client.MarkErrored(context.Background(), "test_queue", 42, "OH NO"); err != nil {
 			t.Fatalf("unexpected error completing job: %s", err)
 		}
@@ -302,7 +303,7 @@ func TestMarkErroredBadResponse(t *testing.T) {
 		responsePayload:  ``,
 	}
 
-	testRoute(t, spec, func(client *Client) {
+	testRoute(t, spec, func(client *queue.Client) {
 		if err := client.MarkErrored(context.Background(), "test_queue", 42, "OH NO"); err == nil {
 			t.Fatalf("expected an error")
 		}
@@ -320,7 +321,7 @@ func TestMarkFailed(t *testing.T) {
 		responsePayload:  ``,
 	}
 
-	testRoute(t, spec, func(client *Client) {
+	testRoute(t, spec, func(client *queue.Client) {
 		if err := client.MarkFailed(context.Background(), "test_queue", 42, "OH NO"); err != nil {
 			t.Fatalf("unexpected error completing job: %s", err)
 		}
@@ -338,7 +339,7 @@ func TestCanceledJobs(t *testing.T) {
 		responsePayload:  `[1]`,
 	}
 
-	testRoute(t, spec, func(client *Client) {
+	testRoute(t, spec, func(client *queue.Client) {
 		if ids, err := client.CanceledJobs(context.Background(), "test_queue", []int{1}); err != nil {
 			t.Fatalf("unexpected error completing job: %s", err)
 		} else if diff := cmp.Diff(ids, []int{1}); diff != "" {
@@ -372,7 +373,7 @@ func TestHeartbeat(t *testing.T) {
 		responsePayload: `{"knownIDs": [1], "cancelIDs": [1]}`,
 	}
 
-	testRoute(t, spec, func(client *Client) {
+	testRoute(t, spec, func(client *queue.Client) {
 		unknownIDs, cancelIDs, err := client.Heartbeat(context.Background(), "test_queue", []int{1, 2, 3})
 		if err != nil {
 			t.Fatalf("unexpected error performing heartbeat: %s", err)
@@ -413,7 +414,7 @@ func TestHeartbeatBadResponse(t *testing.T) {
 		responsePayload: ``,
 	}
 
-	testRoute(t, spec, func(client *Client) {
+	testRoute(t, spec, func(client *queue.Client) {
 		if _, _, err := client.Heartbeat(context.Background(), "test_queue", []int{1, 2, 3}); err == nil {
 			t.Fatalf("expected an error")
 		}
@@ -430,11 +431,11 @@ type routeSpec struct {
 	responsePayload  string
 }
 
-func testRoute(t *testing.T, spec routeSpec, f func(client *Client)) {
+func testRoute(t *testing.T, spec routeSpec, f func(client *queue.Client)) {
 	ts := testServer(t, spec)
 	defer ts.Close()
 
-	options := Options{
+	options := queue.Options{
 		ExecutorName: "deadbeef",
 		BaseClientOptions: apiclient.BaseClientOptions{
 			EndpointOptions: apiclient.EndpointOptions{
@@ -443,7 +444,7 @@ func testRoute(t *testing.T, spec routeSpec, f func(client *Client)) {
 				Token:      "hunter2",
 			},
 		},
-		TelemetryOptions: TelemetryOptions{
+		TelemetryOptions: queue.TelemetryOptions{
 			OS:              "test-os",
 			Architecture:    "test-architecture",
 			DockerVersion:   "test-docker-version",
@@ -454,7 +455,7 @@ func testRoute(t *testing.T, spec routeSpec, f func(client *Client)) {
 		},
 	}
 
-	client, err := New(&observation.TestContext, options, prometheus.GathererFunc(func() ([]*dto.MetricFamily, error) { return nil, nil }))
+	client, err := queue.New(&observation.TestContext, options, prometheus.GathererFunc(func() ([]*dto.MetricFamily, error) { return nil, nil }))
 	require.NoError(t, err)
 	f(client)
 }
