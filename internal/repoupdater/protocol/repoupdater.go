@@ -268,3 +268,13 @@ type ExternalServiceSyncRequest struct {
 type ExternalServiceSyncResult struct {
 	Error string
 }
+
+type ListReposRequest struct {
+	Kind        string
+	DisplayName string
+	//Config      *extsvc.EncryptableConfig
+	Config string
+}
+type ListReposResult struct {
+	Error string
+}

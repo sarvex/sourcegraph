@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sourcegraph/sourcegraph/internal/extsvc"
 	"net/http"
 	"time"
 
@@ -65,6 +66,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/sync-external-service", trace.WithRouteName("sync-external-service", s.handleExternalServiceSync))
 	mux.HandleFunc("/enqueue-changeset-sync", trace.WithRouteName("enqueue-changeset-sync", s.handleEnqueueChangesetSync))
 	mux.HandleFunc("/schedule-perms-sync", trace.WithRouteName("schedule-perms-sync", s.handleSchedulePermsSync))
+	mux.HandleFunc("/list-repos", trace.WithRouteName("list-repos", s.handleListRepos))
 	return mux
 }
 
@@ -77,6 +79,85 @@ func (s *Server) handleRepoUpdateSchedulerInfo(w http.ResponseWriter, r *http.Re
 
 	result := s.Scheduler.ScheduleInfo(args.ID)
 	s.respond(w, http.StatusOK, result)
+}
+
+func (s *Server) handleListRepos(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	//type ListReposRequest struct {
+	//	Kind        string
+	//	DisplayName string
+	//	Config      *extsvc.EncryptableConfig
+	//}
+
+	var req protocol.ListReposRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	logger := s.Logger.With(log.String("Kind", req.Kind), log.String("DisplayName", req.DisplayName))
+
+	// We use the generic sourcer that doesn't have observability attached to it here because the way externalServiceValidate is set up,
+	// using the regular sourcer will cause a large dump of errors to be logged when it exits ListRepos prematurely.
+	var genericSourcer repos.Sourcer
+	sourcerLogger := logger.Scoped("repos.Sourcer", "repositories source")
+	db := database.NewDBWith(sourcerLogger.Scoped("db", "sourcer database"), s)
+	dependenciesService := dependencies.NewService(s.ObservationCtx, db)
+	cf := httpcli.NewExternalClientFactory(httpcli.NewLoggingMiddleware(sourcerLogger))
+	genericSourcer = repos.NewSourcer(sourcerLogger, db, cf, repos.WithDependenciesService(dependenciesService))
+
+	// rawConfig, err := req.Config.Decrypt(ctx)
+
+	es := &types.ExternalService{
+		Kind:        req.Kind,
+		DisplayName: req.DisplayName,
+		Config:      extsvc.NewUnencryptedConfig(req.Config),
+	}
+
+	//externalServiceID := req.ExternalServiceID
+	//
+	//es, err := s.ExternalServiceStore().GetByID(ctx, externalServiceID)
+	//if err != nil {
+	//	if errcode.IsNotFound(err) {
+	//		s.respond(w, http.StatusNotFound, err)
+	//	} else {
+	//		s.respond(w, http.StatusInternalServerError, err)
+	//	}
+	//	return
+	//}
+
+	genericSrc, err := genericSourcer(ctx, es)
+	if err != nil {
+		logger.Error("server.external-service-sync", log.Error(err))
+		return
+	}
+
+	results := make(chan repos.SourceResult)
+
+	//defer func() {
+	//	cancel()
+	//
+	//	// We need to drain the rest of the results to not leak a blocked goroutine.
+	//	for range results {
+	//	}
+	//}()
+
+	go func() {
+		genericSrc.ListRepos(ctx, results)
+		close(results)
+	}()
+
+	//select {
+	//case res := <-results:
+	//	// As soon as we get the first result back, we've got what we need to validate the external service.
+	//	return res.Err
+	//case <-ctx.Done():
+	//	return ctx.Err()
+	//}
+
+	s.respond(w, http.StatusOK, results)
 }
 
 func (s *Server) handleRepoLookup(w http.ResponseWriter, r *http.Request) {
