@@ -54,14 +54,6 @@ type AWSKMSEncryptionKey struct {
 	Type            string `json:"type"`
 }
 
-// AccessToken description: Configuration for Job Access Tokens
-type AccessToken struct {
-	// Expiry description: Validity expressed in minutes of the unlock account token
-	Expiry int `json:"expiry,omitempty"`
-	// SigningKey description: Base64-encoded HMAC signing key to sign the JWT token for account unlock URLs
-	SigningKey string `json:"signingKey,omitempty"`
-}
-
 // ApiRatelimit description: Configuration for API rate limiting
 type ApiRatelimit struct {
 	// Enabled description: Whether API rate limiting is enabled
@@ -648,8 +640,8 @@ type ExcludedGitoliteRepo struct {
 
 // Executors description: Configuration for executors
 type Executors struct {
-	// Job description: Configuration for job
-	Job *Job `json:"job,omitempty"`
+	// JobAccessToken description: Configuration for job access token
+	JobAccessToken *JobAccessToken `json:"job.accessToken,omitempty"`
 }
 type ExistingChangesetSpec struct {
 	// BaseRepository description: The GraphQL ID of the repository that contains the existing changeset on the code host.
@@ -1261,10 +1253,12 @@ type JVMPackagesConnection struct {
 	Maven *Maven `json:"maven,omitempty"`
 }
 
-// Job description: Configuration for job
-type Job struct {
-	// AccessToken description: Configuration for Job Access Tokens
-	AccessToken *AccessToken `json:"accessToken,omitempty"`
+// JobAccessToken description: Configuration for job access token
+type JobAccessToken struct {
+	// Expiry description: Validity expressed in minutes of the unlock account token
+	Expiry int `json:"expiry,omitempty"`
+	// SigningKey description: Base64-encoded HMAC signing key to sign the JWT token for account unlock URLs
+	SigningKey string `json:"signingKey,omitempty"`
 }
 
 // Log description: Configuration for logging and alerting, including to external services.

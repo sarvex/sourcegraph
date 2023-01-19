@@ -1120,26 +1120,20 @@
       "description": "Configuration for executors",
       "type": "object",
       "properties": {
-        "job": {
-          "description": "Configuration for job",
+        "job.accessToken": {
+          "description": "Configuration for job access token",
           "type": "object",
           "properties": {
-            "accessToken": {
-              "description": "Configuration for Job Access Tokens",
-              "type": "object",
-              "properties": {
-                "signingKey": {
-                  "description": "Base64-encoded HMAC signing key to sign the JWT token for account unlock URLs",
-                  "type": "string",
-                  "group": "Authentication"
-                },
-                "expiry": {
-                  "description": "Validity expressed in minutes of the unlock account token",
-                  "type": "integer",
-                  "group": "Authentication",
-                  "default": 60
-                }
-              }
+            "signingKey": {
+              "description": "Base64-encoded HMAC signing key to sign the JWT token for account unlock URLs",
+              "type": "string",
+              "group": "Authentication"
+            },
+            "expiry": {
+              "description": "Validity expressed in minutes of the unlock account token",
+              "type": "integer",
+              "group": "Authentication",
+              "default": 60
             }
           }
         }

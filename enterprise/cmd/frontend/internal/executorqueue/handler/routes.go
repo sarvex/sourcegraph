@@ -130,7 +130,7 @@ func validateJobRequest(w http.ResponseWriter, r *http.Request, executorHandler 
 	// Parse the provided JWT token with the key.
 	c := jobOperationClaims{}
 	token, err := jwt.ParseWithClaims(authToken, &c, func(token *jwt.Token) (any, error) {
-		return base64.StdEncoding.DecodeString("ZXhlY3V0b3JzLmpvYi5zaWduaW5nS2V5Cg==")
+		return base64.StdEncoding.DecodeString(conf.SiteConfig().Executors.JobAccessToken.SigningKey)
 	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS512.Name}))
 
 	if err != nil {
