@@ -14,6 +14,7 @@ import (
 	apiclient "github.com/sourcegraph/sourcegraph/enterprise/internal/executor"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/database"
+	"github.com/sourcegraph/sourcegraph/internal/executor"
 	metricsstore "github.com/sourcegraph/sourcegraph/internal/metrics/store"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/internal/workerutil"
@@ -88,7 +89,7 @@ func (h *handler[T]) exists(ctx context.Context, id int) (bool, error) {
 // dequeue selects a job record from the database and stashes metadata including
 // the job record and the locking transaction. If no job is available for processing,
 // a false-valued flag is returned.
-func (h *handler[T]) dequeue(ctx context.Context, metadata executorMetadata) (_ apiclient.Job, dequeued bool, _ error) {
+func (h *handler[T]) dequeue(ctx context.Context, queue string, metadata executorMetadata) (_ apiclient.Job, dequeued bool, _ error) {
 	if err := validateWorkerHostname(metadata.Name); err != nil {
 		return apiclient.Job{}, false, err
 	}
@@ -137,6 +138,8 @@ func (h *handler[T]) dequeue(ctx context.Context, metadata executorMetadata) (_ 
 		job.Token = token
 	}
 
+	job.Queue = queue
+
 	return job, true, nil
 }
 
@@ -167,7 +170,7 @@ type jobOperationClaims struct {
 }
 
 // addExecutionLogEntry calls AddExecutionLogEntry for the given job.
-func (h *handler[T]) addExecutionLogEntry(ctx context.Context, executorName string, jobID int, entry workerutil.ExecutionLogEntry) (entryID int, err error) {
+func (h *handler[T]) addExecutionLogEntry(ctx context.Context, executorName string, jobID int, entry executor.ExecutionLogEntry) (entryID int, err error) {
 	if err := validateWorkerHostname(executorName); err != nil {
 		return 0, err
 	}
@@ -187,7 +190,7 @@ func (h *handler[T]) addExecutionLogEntry(ctx context.Context, executorName stri
 }
 
 // updateExecutionLogEntry calls UpdateExecutionLogEntry for the given job and entry.
-func (h *handler[T]) updateExecutionLogEntry(ctx context.Context, executorName string, jobID int, entryID int, entry workerutil.ExecutionLogEntry) error {
+func (h *handler[T]) updateExecutionLogEntry(ctx context.Context, executorName string, jobID int, entryID int, entry executor.ExecutionLogEntry) error {
 	if err := validateWorkerHostname(executorName); err != nil {
 		return err
 	}

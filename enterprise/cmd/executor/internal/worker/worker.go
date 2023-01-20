@@ -14,10 +14,11 @@ import (
 	"github.com/sourcegraph/sourcegraph/enterprise/cmd/executor/internal/apiclient"
 	"github.com/sourcegraph/sourcegraph/enterprise/cmd/executor/internal/apiclient/files"
 	"github.com/sourcegraph/sourcegraph/enterprise/cmd/executor/internal/apiclient/queue"
+	"github.com/sourcegraph/sourcegraph/enterprise/cmd/executor/internal/apiclient/queue/job"
+	"github.com/sourcegraph/sourcegraph/enterprise/cmd/executor/internal/apiclient/queue/worker"
 	"github.com/sourcegraph/sourcegraph/enterprise/cmd/executor/internal/command"
 	"github.com/sourcegraph/sourcegraph/enterprise/cmd/executor/internal/janitor"
 	"github.com/sourcegraph/sourcegraph/enterprise/cmd/executor/internal/metrics"
-	"github.com/sourcegraph/sourcegraph/enterprise/cmd/executor/internal/worker/store"
 	"github.com/sourcegraph/sourcegraph/enterprise/internal/executor"
 	"github.com/sourcegraph/sourcegraph/internal/goroutine"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
@@ -84,23 +85,27 @@ func NewWorker(observationCtx *observation.Context, nameSet *janitor.NameSet, op
 	observationCtx = observation.ContextWithLogger(observationCtx.Logger.Scoped("worker", "background worker task periodically fetching jobs"), observationCtx)
 
 	gatherer := metrics.MakeExecutorMetricsGatherer(log.Scoped("executor-worker.metrics-gatherer", ""), prometheus.DefaultGatherer, options.NodeExporterEndpoint, options.DockerRegistryNodeExporterEndpoint)
-	queueStore, err := queue.New(observationCtx, options.QueueOptions, gatherer)
+	workerClient, err := worker.New(observationCtx, options.QueueOptions, gatherer)
 	if err != nil {
-		return nil, errors.Wrap(err, "building queue store")
+		return nil, errors.Wrap(err, "building worker client")
 	}
 	filesStore, err := files.New(observationCtx, options.FilesOptions)
 	if err != nil {
 		return nil, errors.Wrap(err, "building files store")
 	}
-	shim := &store.QueueShim{Name: options.QueueName, Store: queueStore}
 
-	if !connectToFrontend(observationCtx.Logger, queueStore, options) {
+	if !connectToFrontend(observationCtx.Logger, workerClient, options) {
 		os.Exit(1)
+	}
+
+	jobClient, err := job.New(observationCtx, options.QueueOptions, gatherer)
+	if err != nil {
+		return nil, errors.Wrap(err, "building job client")
 	}
 
 	h := &handler{
 		nameSet:       nameSet,
-		store:         shim,
+		logStore:      jobClient,
 		filesStore:    filesStore,
 		options:       options,
 		operations:    command.NewOperations(observationCtx),
@@ -109,16 +114,16 @@ func NewWorker(observationCtx *observation.Context, nameSet *janitor.NameSet, op
 
 	ctx := context.Background()
 
-	return workerutil.NewWorker[executor.Job](ctx, shim, h, options.WorkerOptions), nil
+	return workerutil.NewWorker[executor.Job](ctx, workerClient, h, options.WorkerOptions), nil
 }
 
 // connectToFrontend will ping the configured Sourcegraph instance until it receives a 200 response.
 // For the first minute, "connection refused" errors will not be emitted. This is to stop log spam
 // in dev environments where the executor may start up before the frontend. This method returns true
 // after a ping is successful and returns false if a user signal is received.
-func connectToFrontend(logger log.Logger, queueStore *queue.Client, options Options) bool {
+func connectToFrontend(logger log.Logger, queueStore *worker.Client, options Options) bool {
 	start := time.Now()
-	logger.Debug("Connecting to Sourcegraph instance", log.String("url", options.QueueOptions.BaseClientOptions.EndpointOptions.URL))
+	//logger.Debug("Connecting to Sourcegraph instance", log.String("url", options.QueueOptions.BaseClientOptions.EndpointOptions.URL))
 
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
@@ -128,7 +133,7 @@ func connectToFrontend(logger log.Logger, queueStore *queue.Client, options Opti
 	defer signal.Stop(signals)
 
 	for {
-		err := queueStore.Ping(context.Background(), options.QueueName, nil)
+		err := queueStore.Ping(context.Background(), nil)
 		if err == nil {
 			logger.Debug("Connected to Sourcegraph instance")
 			return true

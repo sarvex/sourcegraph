@@ -12,8 +12,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/database/basestore"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbutil"
-	"github.com/sourcegraph/sourcegraph/internal/workerutil"
-	dbworkerstore "github.com/sourcegraph/sourcegraph/internal/workerutil/dbworker/store"
+	"github.com/sourcegraph/sourcegraph/internal/executor"
 )
 
 type PermissionSyncJobOpts struct {
@@ -211,7 +210,7 @@ type PermissionSyncJob struct {
 	NumResets         int
 	NumFailures       int
 	LastHeartbeatAt   time.Time
-	ExecutionLogs     []workerutil.ExecutionLogEntry
+	ExecutionLogs     []executor.ExecutionLogEntry
 	WorkerHostname    string
 	Cancel            bool
 
@@ -257,7 +256,7 @@ func ScanPermissionSyncJob(s dbutil.Scanner) (*PermissionSyncJob, error) {
 }
 
 func scanPermissionSyncJob(job *PermissionSyncJob, s dbutil.Scanner) error {
-	var executionLogs []dbworkerstore.ExecutionLogEntry
+	var executionLogs []executor.ExecutionLogEntry
 
 	if err := s.Scan(
 		&job.ID,
@@ -286,7 +285,7 @@ func scanPermissionSyncJob(job *PermissionSyncJob, s dbutil.Scanner) error {
 	}
 
 	for _, entry := range executionLogs {
-		job.ExecutionLogs = append(job.ExecutionLogs, workerutil.ExecutionLogEntry(entry))
+		job.ExecutionLogs = append(job.ExecutionLogs, executor.ExecutionLogEntry(entry))
 	}
 	return nil
 }

@@ -187,6 +187,7 @@ func filesOptions(c *config.Config) apiclient.BaseClientOptions {
 func baseClientOptions(c *config.Config, pathPrefix string) apiclient.BaseClientOptions {
 	return apiclient.BaseClientOptions{
 		EndpointOptions: endpointOptions(c, pathPrefix),
+		Queue:           c.QueueName,
 	}
 }
 

@@ -16,6 +16,8 @@ type Job struct {
 	// that different queues can share identifiers.
 	ID int `json:"id"`
 
+	Queue string `json:"queue"`
+
 	// Token TODO
 	Token string `json:"Token"`
 
@@ -74,6 +76,7 @@ func (j Job) MarshalJSON() ([]byte, error) {
 		v2 := v2Job{
 			Version:             j.Version,
 			ID:                  j.ID,
+			Queue:               j.Queue,
 			Token:               j.Token,
 			RepositoryName:      j.RepositoryName,
 			RepositoryDirectory: j.RepositoryDirectory,
@@ -94,6 +97,7 @@ func (j Job) MarshalJSON() ([]byte, error) {
 	}
 	v1 := v1Job{
 		ID:                  j.ID,
+		Queue:               j.Queue,
 		Token:               j.Token,
 		RepositoryName:      j.RepositoryName,
 		RepositoryDirectory: j.RepositoryDirectory,
@@ -129,6 +133,7 @@ func (j *Job) UnmarshalJSON(data []byte) error {
 		}
 		j.Version = v2.Version
 		j.ID = v2.ID
+		j.Queue = v2.Queue
 		j.Token = v2.Token
 		j.RepositoryName = v2.RepositoryName
 		j.RepositoryDirectory = v2.RepositoryDirectory
@@ -151,6 +156,7 @@ func (j *Job) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	j.ID = v1.ID
+	j.Queue = v1.Queue
 	j.Token = v1.Token
 	j.RepositoryName = v1.RepositoryName
 	j.RepositoryDirectory = v1.RepositoryDirectory
@@ -180,6 +186,7 @@ type versionJob struct {
 type v2Job struct {
 	Version             int                             `json:"version,omitempty"`
 	ID                  int                             `json:"id"`
+	Queue               string                          `json:"queue"`
 	Token               string                          `json:"token"`
 	RepositoryName      string                          `json:"repositoryName"`
 	RepositoryDirectory string                          `json:"repositoryDirectory"`
@@ -196,6 +203,7 @@ type v2Job struct {
 
 type v1Job struct {
 	ID                  int                             `json:"id"`
+	Queue               string                          `json:"queue"`
 	Token               string                          `json:"token"`
 	RepositoryName      string                          `json:"repositoryName"`
 	RepositoryDirectory string                          `json:"repositoryDirectory"`

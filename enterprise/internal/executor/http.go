@@ -1,6 +1,8 @@
 package executor
 
-import "github.com/sourcegraph/sourcegraph/internal/workerutil"
+import (
+	"github.com/sourcegraph/sourcegraph/internal/executor"
+)
 
 type DequeueRequest struct {
 	ExecutorName string `json:"executorName"`
@@ -17,13 +19,13 @@ type JobOperationRequest struct {
 
 type AddExecutionLogEntryRequest struct {
 	JobOperationRequest
-	workerutil.ExecutionLogEntry
+	executor.ExecutionLogEntry
 }
 
 type UpdateExecutionLogEntryRequest struct {
 	JobOperationRequest
 	EntryID int `json:"entryId"`
-	workerutil.ExecutionLogEntry
+	executor.ExecutionLogEntry
 }
 
 type MarkCompleteRequest struct {

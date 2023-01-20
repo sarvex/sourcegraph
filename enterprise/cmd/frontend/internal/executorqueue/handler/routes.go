@@ -193,7 +193,7 @@ func (h *handler[T]) handleDequeue(w http.ResponseWriter, r *http.Request) {
 	var payload apiclient.DequeueRequest
 
 	h.wrapHandler(w, r, &payload, func() (int, any, error) {
-		job, dequeued, err := h.dequeue(r.Context(), executorMetadata{
+		job, dequeued, err := h.dequeue(r.Context(), mux.Vars(r)["queueName"], executorMetadata{
 			Name:    payload.ExecutorName,
 			Version: payload.Version,
 			Resources: ResourceMetadata{

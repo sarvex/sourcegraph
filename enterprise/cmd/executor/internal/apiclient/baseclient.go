@@ -56,6 +56,8 @@ type BaseClientOptions struct {
 
 	// EndpointOptions configures the endpoint the BaseClient will call for requests.
 	EndpointOptions EndpointOptions
+
+	Queue string
 }
 
 type EndpointOptions struct {
@@ -223,4 +225,8 @@ func newJSONRequest(method string, url *url.URL, payload any) (*http.Request, er
 
 	req.Header.Set("Content-Type", "application/json")
 	return req, nil
+}
+
+func (c *BaseClient) Queue() string {
+	return c.options.Queue
 }
