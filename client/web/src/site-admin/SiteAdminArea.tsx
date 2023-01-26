@@ -21,7 +21,6 @@ import { RouteDescriptor } from '../util/contributions'
 import { SiteAdminSidebar, SiteAdminSideBarGroups } from './SiteAdminSidebar'
 
 import styles from './SiteAdminArea.module.scss'
-import { useFeatureFlag } from '../featureFlags/useFeatureFlag'
 
 const NotFoundPage: React.ComponentType<React.PropsWithChildren<{}>> = () => (
     <HeroPage
@@ -44,7 +43,6 @@ export interface SiteAdminAreaRouteContext
     authenticatedUser: AuthenticatedUser
     isLightTheme: boolean
     isSourcegraphDotCom: boolean
-    isRbacEnabled: boolean
 
     /** This property is only used by {@link SiteAdminOverviewPage}. */
     overviewComponents: readonly React.ComponentType<React.PropsWithChildren<{}>>[]
@@ -68,7 +66,6 @@ interface SiteAdminAreaProps
 
 const AuthenticatedSiteAdminArea: React.FunctionComponent<React.PropsWithChildren<SiteAdminAreaProps>> = props => {
     const reference = useRef<HTMLDivElement>(null)
-    const [isRbacEnabled] = useFeatureFlag('enable-rbac', false)
 
     // If not site admin, redirect to sign in.
     if (!props.authenticatedUser.siteAdmin) {
@@ -87,7 +84,6 @@ const AuthenticatedSiteAdminArea: React.FunctionComponent<React.PropsWithChildre
         site: { __typename: 'Site' as const, id: window.context.siteGQLID },
         overviewComponents: props.overviewComponents,
         telemetryService: props.telemetryService,
-        isRbacEnabled,
     }
 
     return (
