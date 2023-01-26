@@ -21,6 +21,7 @@ import { RouteDescriptor } from '../util/contributions'
 import { SiteAdminSidebar, SiteAdminSideBarGroups } from './SiteAdminSidebar'
 
 import styles from './SiteAdminArea.module.scss'
+import { useFeatureFlag } from '../featureFlags/useFeatureFlag'
 
 const NotFoundPage: React.ComponentType<React.PropsWithChildren<{}>> = () => (
     <HeroPage
@@ -66,6 +67,7 @@ interface SiteAdminAreaProps
 
 const AuthenticatedSiteAdminArea: React.FunctionComponent<React.PropsWithChildren<SiteAdminAreaProps>> = props => {
     const reference = useRef<HTMLDivElement>(null)
+    const [isRbacEnabled] = useFeatureFlag('enable-rbac', false)
 
     // If not site admin, redirect to sign in.
     if (!props.authenticatedUser.siteAdmin) {
@@ -95,6 +97,7 @@ const AuthenticatedSiteAdminArea: React.FunctionComponent<React.PropsWithChildre
             </PageHeader>
             <div className="d-flex my-3 flex-column flex-sm-row" ref={reference}>
                 <SiteAdminSidebar
+                    isRbacEnabled={isRbacEnabled}
                     className={classNames('flex-0 mr-3 mb-4', styles.sidebar)}
                     groups={props.sideBarGroups}
                     isSourcegraphDotCom={props.isSourcegraphDotCom}
