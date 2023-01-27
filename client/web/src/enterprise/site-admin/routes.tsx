@@ -100,6 +100,17 @@ export const enterpriseSiteAdminAreaRoutes: readonly SiteAdminAreaRoute[] = (
                 batchChangesEnabled && batchChangesWebhookLogsEnabled,
         },
 
+        // Enterprise maintenance area
+
+        {
+            exact: true,
+            path: '/code-insights-jobs',
+            render: lazyComponent(
+                () => import('../insights/admin-ui/CodeInsightsJobs'),
+                'CodeInsightsJobs'
+            ),
+        },
+
         // Code graph upload routes
         {
             path: '/code-intelligence',
