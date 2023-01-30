@@ -105,10 +105,7 @@ export const enterpriseSiteAdminAreaRoutes: readonly SiteAdminAreaRoute[] = (
         {
             exact: true,
             path: '/code-insights-jobs',
-            render: lazyComponent(
-                () => import('../insights/admin-ui/CodeInsightsJobs'),
-                'CodeInsightsJobs'
-            ),
+            render: lazyComponent(() => import('../insights/admin-ui/CodeInsightsJobs'), 'CodeInsightsJobs'),
         },
 
         // Code graph upload routes
