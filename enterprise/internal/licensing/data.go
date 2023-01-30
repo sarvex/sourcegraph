@@ -17,9 +17,10 @@ const (
 	// PlanEnterprise1 is the "Enterprise" plan for 4.0.
 	PlanEnterprise1 Plan = "enterprise-1"
 
-	// PlanFree0 is the default plan if no license key is set.
+	// PlanFree0 is the default plan if no license key is set before 4.5.
 	PlanFree0 Plan = "free-0"
 
+	// PlanFree1 is the default plan if no license key is set from 4.5 onwards.
 	PlanFree1 Plan = "free-1"
 )
 
