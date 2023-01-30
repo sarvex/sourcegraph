@@ -1,13 +1,21 @@
 // @ts-check
 const path = require('path')
+const fs = require('fs')
 
 const semver = require('semver')
 const logger = require('signale')
 
+// TODO(bazel): outside bazel support
+const IS_BAZEL = true
+
+// TODO(bazel): actually read it? read package.json instead?
+const moduleType = !process.env.TSCONFIG
+  ? false
+  : /"commonjs"/.test(fs.readFileSync(process.env.TSCONFIG).toString()) ? 'commonjs' : false;
+
 /** @type {import('@babel/core').ConfigFunction} */
 module.exports = api => {
-  const isTest = api.env('test')
-  api.cache.forever()
+  api.cache[IS_BAZEL ? 'never' : 'forever']()
 
   /**
    * Whether to instrument files with istanbul for code coverage.
@@ -25,8 +33,9 @@ module.exports = api => {
       [
         '@babel/preset-env',
         {
+          // Do not transform module types with bazel, it will be done on another build step.
           // Node (used for testing) doesn't support modules, so compile to CommonJS for testing.
-          modules: isTest ? 'commonjs' : false,
+          modules: IS_BAZEL ? moduleType : api.env('test') ? 'commonjs' : false,
           bugfixes: true,
           useBuiltIns: 'entry',
           include: [
