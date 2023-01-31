@@ -7,8 +7,8 @@ import { createBrowserHistory } from 'history'
 import ServerIcon from 'mdi-react/ServerIcon'
 import { Route, Switch, Router } from 'react-router'
 import { CompatRouter } from 'react-router-dom-v5-compat'
-import { combineLatest, from, Subscription, fromEvent, of, Subject, Observable } from 'rxjs'
-import { first, startWith, switchMap } from 'rxjs/operators'
+import { combineLatest, from, Subscription, fromEvent, Subject, Observable } from 'rxjs'
+import { first, startWith } from 'rxjs/operators'
 import * as uuid from 'uuid'
 
 import { logger } from '@sourcegraph/common'
@@ -46,7 +46,7 @@ import { TemporarySettingsStorage } from '@sourcegraph/shared/src/settings/tempo
 import { globbingEnabledFromSettings } from '@sourcegraph/shared/src/util/globbing'
 import { FeedbackText, setLinkComponent, RouterLink, WildcardThemeContext, WildcardTheme } from '@sourcegraph/wildcard'
 
-import { authenticatedUser, AuthenticatedUser } from './auth'
+import { authenticatedUser as authenticatedUserSubject, AuthenticatedUser, authenticatedUserValue } from './auth'
 import { getWebGraphQLClient } from './backend/graphql'
 import { BatchChangesProps, isBatchChangesExecutionEnabled } from './batches'
 import type { CodeIntelligenceProps } from './codeintel'
@@ -127,11 +127,10 @@ interface SourcegraphWebAppState extends SettingsCascadeProps {
 
     /**
      * The currently authenticated user:
-     * - `undefined` until `CurrentAuthState` query completion.
      * - `AuthenticatedUser` if the viewer is authenticated.
      * - `null` if the viewer is anonymous.
      */
-    authenticatedUser?: AuthenticatedUser | null
+    authenticatedUser: AuthenticatedUser | null
 
     /** GraphQL client initialized asynchronously to restore persisted cache. */
     graphqlClient?: GraphQLClient
@@ -174,10 +173,7 @@ const history = createBrowserHistory()
 /**
  * The root component.
  */
-export class SourcegraphWebApp extends React.Component<
-    React.PropsWithChildren<SourcegraphWebAppProps>,
-    SourcegraphWebAppState
-> {
+export class SourcegraphWebApp extends React.Component<SourcegraphWebAppProps, SourcegraphWebAppState> {
     private readonly subscriptions = new Subscription()
     private readonly userRepositoriesUpdates = new Subject<void>()
     private readonly platformContext: PlatformContext = createPlatformContext()
@@ -197,6 +193,7 @@ export class SourcegraphWebApp extends React.Component<
             viewerSubject: siteSubjectNoAdmin(),
             globbing: false,
             isSetupWizardEnabled: false,
+            authenticatedUser: authenticatedUserValue,
         }
     }
 
@@ -221,11 +218,7 @@ export class SourcegraphWebApp extends React.Component<
             })
 
         this.subscriptions.add(
-            combineLatest([
-                from(this.platformContext.settings),
-                // Start with `undefined` while we don't know if the viewer is authenticated or not.
-                authenticatedUser.pipe(startWith(undefined)),
-            ]).subscribe(
+            combineLatest([from(this.platformContext.settings), authenticatedUserSubject]).subscribe(
                 ([settingsCascade, authenticatedUser]) => {
                     setExperimentalFeaturesFromSettings(settingsCascade)
                     setQueryStateFromSettings(settingsCascade)
@@ -236,8 +229,7 @@ export class SourcegraphWebApp extends React.Component<
                         viewerSubject: viewerSubjectFromSettings(settingsCascade, authenticatedUser),
                         isSetupWizardEnabled: !!getExperimentalFeatures().setupWizard,
                     })
-                },
-                () => this.setState({ authenticatedUser: null })
+                }
             )
         )
 
@@ -247,19 +239,15 @@ export class SourcegraphWebApp extends React.Component<
          * Don't subscribe to this event when there wasn't an authenticated user,
          * as it could lead to an infinite loop of 401 -> reload -> 401
          */
-        this.subscriptions.add(
-            authenticatedUser
-                .pipe(
-                    switchMap(authenticatedUser =>
-                        authenticatedUser ? fromEvent<ErrorEvent>(window, 'error') : of(null)
-                    )
-                )
-                .subscribe(event => {
+        if (window.context.isAuthenticatedUser) {
+            this.subscriptions.add(
+                fromEvent<ErrorEvent>(window, 'error').subscribe(event => {
                     if (event?.error instanceof HTTPStatusError && event.error.status === 401) {
                         location.reload()
                     }
                 })
-        )
+            )
+        }
 
         if (parsedSearchQuery && !filterExists(parsedSearchQuery, FilterType.context)) {
             // If a context filter does not exist in the query, we have to switch the selected context
@@ -342,49 +330,43 @@ export class SourcegraphWebApp extends React.Component<
         }
 
         const { authenticatedUser, graphqlClient, temporarySettingsStorage } = this.state
-        if (authenticatedUser === undefined || graphqlClient === undefined || temporarySettingsStorage === undefined) {
+
+        if (graphqlClient === undefined || temporarySettingsStorage === undefined) {
             return null
         }
 
         const root = (
-            <Route
-                path="/"
-                render={routeComponentProps => (
-                    <Layout
-                        {...props}
-                        authenticatedUser={authenticatedUser}
-                        viewerSubject={this.state.viewerSubject}
-                        settingsCascade={this.state.settingsCascade}
-                        batchChangesEnabled={this.props.batchChangesEnabled}
-                        batchChangesExecutionEnabled={isBatchChangesExecutionEnabled(this.state.settingsCascade)}
-                        batchChangesWebhookLogsEnabled={window.context.batchChangesWebhookLogsEnabled}
-                        // Search query
-                        fetchHighlightedFileLineRanges={this.fetchHighlightedFileLineRanges}
-                        // Extensions
-                        platformContext={this.platformContext}
-                        extensionsController={this.extensionsController}
-                        telemetryService={eventLogger}
-                        isSourcegraphDotCom={window.context.sourcegraphDotComMode}
-                        searchContextsEnabled={this.props.searchContextsEnabled}
-                        selectedSearchContextSpec={this.getSelectedSearchContextSpec()}
-                        setSelectedSearchContextSpec={this.setSelectedSearchContextSpec}
-                        getUserSearchContextNamespaces={getUserSearchContextNamespaces}
-                        fetchSearchContexts={fetchSearchContexts}
-                        fetchSearchContextBySpec={fetchSearchContextBySpec}
-                        fetchSearchContext={fetchSearchContext}
-                        createSearchContext={createSearchContext}
-                        updateSearchContext={updateSearchContext}
-                        deleteSearchContext={deleteSearchContext}
-                        isSearchContextSpecAvailable={isSearchContextSpecAvailable}
-                        globbing={this.state.globbing}
-                        streamSearch={aggregateStreamingSearch}
-                        onCreateNotebookFromNotepad={this.onCreateNotebook}
-                    />
-                )}
+            <Layout
+                {...this.props}
+                authenticatedUser={authenticatedUser}
+                viewerSubject={this.state.viewerSubject}
+                settingsCascade={this.state.settingsCascade}
+                batchChangesEnabled={this.props.batchChangesEnabled}
+                batchChangesExecutionEnabled={isBatchChangesExecutionEnabled(this.state.settingsCascade)}
+                batchChangesWebhookLogsEnabled={window.context.batchChangesWebhookLogsEnabled}
+                // Search query
+                fetchHighlightedFileLineRanges={this.fetchHighlightedFileLineRanges}
+                // Extensions
+                platformContext={this.platformContext}
+                extensionsController={this.extensionsController}
+                telemetryService={eventLogger}
+                isSourcegraphDotCom={window.context.sourcegraphDotComMode}
+                searchContextsEnabled={this.props.searchContextsEnabled}
+                selectedSearchContextSpec={this.getSelectedSearchContextSpec()}
+                setSelectedSearchContextSpec={this.setSelectedSearchContextSpec}
+                getUserSearchContextNamespaces={getUserSearchContextNamespaces}
+                fetchSearchContexts={fetchSearchContexts}
+                fetchSearchContextBySpec={fetchSearchContextBySpec}
+                fetchSearchContext={fetchSearchContext}
+                createSearchContext={createSearchContext}
+                updateSearchContext={updateSearchContext}
+                deleteSearchContext={deleteSearchContext}
+                isSearchContextSpecAvailable={isSearchContextSpecAvailable}
+                globbing={this.state.globbing}
+                streamSearch={aggregateStreamingSearch}
+                onCreateNotebookFromNotepad={this.onCreateNotebook}
             />
         )
-
-        const { children, ...props } = this.props
 
         return (
             <ComponentsComposer
