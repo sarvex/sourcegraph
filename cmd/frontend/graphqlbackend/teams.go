@@ -2,6 +2,7 @@ package graphqlbackend
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/graph-gophers/graphql-go"
 	"github.com/graph-gophers/graphql-go/relay"
@@ -147,11 +148,59 @@ func (r *schemaResolver) DeleteTeam(args *DeleteTeamArgs) *EmptyResponse {
 type TeamMembersArgs struct {
 	Team     *graphql.ID
 	TeamName *string
-	Members  []graphql.ID
+	Members  []TeamMemberInput
 }
 
-func (r *schemaResolver) AddTeamMembers(args *TeamMembersArgs) *teamResolver {
-	return &teamResolver{}
+type TeamMemberInput struct {
+	ID                         *graphql.ID
+	Username                   *string
+	Email                      *string
+	ExternalAccountServiceID   *string
+	ExternalAccountServiceType *string
+	ExternalAccountAccountID   *string
+	ExternalAccountLogin       *string
+}
+
+func (r *schemaResolver) AddTeamMembers(ctx context.Context, args *TeamMembersArgs) (*teamResolver, error) {
+	var team *types.Team
+	if args.Team != nil {
+		var id int32
+		err := relay.UnmarshalSpec(*args.Team, id)
+		if err != nil {
+			return nil, err
+		}
+		team, err = r.db.Teams().GetTeamByID(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+	} else if args.TeamName != nil {
+		var err error
+		team, err = r.db.Teams().GetTeamByName(ctx, *args.TeamName)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, errors.New("must specify team name or team id")
+	}
+
+	fmt.Printf("Arguments for query: %v\n", args.Members)
+
+	users, err := usersForTeamMembers(ctx, r.db, args.Members)
+	if err != nil {
+		return nil, err
+	}
+	ms := make([]*types.TeamMember, 0, len(users))
+	for _, u := range users {
+		ms = append(ms, &types.TeamMember{
+			UserID: u.ID,
+			TeamID: team.ID,
+		})
+	}
+	if err := r.db.Teams().CreateTeamMember(ctx, ms...); err != nil {
+		return nil, err
+	}
+
+	return &teamResolver{team: team, teamsDb: r.db.Teams()}, nil
 }
 
 func (r *schemaResolver) SetTeamMembers(args *TeamMembersArgs) *teamResolver {
@@ -160,4 +209,124 @@ func (r *schemaResolver) SetTeamMembers(args *TeamMembersArgs) *teamResolver {
 
 func (r *schemaResolver) RemoveTeamMembers(args *TeamMembersArgs) *teamResolver {
 	return &teamResolver{}
+}
+
+func usersForTeamMembers(ctx context.Context, db database.DB, members []TeamMemberInput) (users []*types.User, err error) {
+	// First, look at ID.
+	ids := []int32{}
+	for _, m := range members {
+		if m.ID != nil {
+			id, err := UnmarshalUserID(*m.ID)
+			if err != nil {
+				return nil, err
+			}
+			ids = append(ids, id)
+		}
+	}
+	if len(ids) > 0 {
+		users, err = db.Users().List(ctx, &database.UsersListOptions{UserIDs: ids})
+		if err != nil {
+			return nil, err
+		}
+		if len(users) != len(ids) {
+			return nil, errors.New("not all user IDs returned a result")
+		}
+	}
+	// Now, look at all that have username set.
+	usernames := []string{}
+	for _, m := range members {
+		if m.ID != nil {
+			continue
+		}
+		if m.Username != nil {
+			usernames = append(usernames, *m.Username)
+		}
+	}
+	if len(usernames) > 0 {
+		us, err := db.Users().List(ctx, &database.UsersListOptions{Usernames: usernames})
+		if err != nil {
+			return nil, err
+		}
+		if len(us) != len(ids) {
+			return nil, errors.New("not all usernames returned a result")
+		}
+		users = append(users, us...)
+	}
+	// Next up: Email.
+	for _, m := range members {
+		if m.ID != nil {
+			continue
+		}
+		if m.Username != nil {
+			continue
+		}
+		if m.Email != nil {
+			user, err := db.Users().GetByVerifiedEmail(ctx, *m.Email)
+			if err != nil {
+				return nil, err
+			}
+			users = append(users, user)
+		}
+	}
+	// Next up: ExternalAccount.
+	for _, m := range members {
+		if m.ID != nil {
+			continue
+		}
+		if m.Username != nil {
+			continue
+		}
+		if m.Email != nil {
+			continue
+		}
+		if m.ExternalAccountServiceID == nil || m.ExternalAccountServiceType == nil {
+			return nil, errors.New("must specify at least one option for each member")
+		}
+		eas, err := db.UserExternalAccounts().List(ctx, database.ExternalAccountsListOptions{
+			ServiceType: *m.ExternalAccountServiceType,
+			ServiceID:   *m.ExternalAccountServiceID,
+		})
+		if err != nil {
+			return nil, err
+		}
+		if len(eas) == 0 {
+			return nil, errors.New("no external account entry for user")
+		}
+		found := false
+		for _, ea := range eas {
+			if m.ExternalAccountAccountID != nil {
+				if ea.AccountID == *m.ExternalAccountAccountID {
+					u, err := db.Users().GetByID(ctx, ea.UserID)
+					if err != nil {
+						return nil, err
+					}
+					users = append(users, u)
+					found = true
+					break
+				}
+				continue
+			}
+			if m.ExternalAccountLogin != nil {
+				if ea.PublicAccountData.Login == nil {
+					continue
+				}
+				if *ea.PublicAccountData.Login == *m.ExternalAccountAccountID {
+					u, err := db.Users().GetByID(ctx, ea.UserID)
+					if err != nil {
+						return nil, err
+					}
+					users = append(users, u)
+					found = true
+					break
+				}
+				continue
+			}
+			return nil, errors.New("must set either accountID or login for external account")
+		}
+		if !found {
+			// no login data for account :shrug:.
+			// return nil, errors.New("matching account not found")
+		}
+	}
+	return users, nil
 }
