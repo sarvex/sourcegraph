@@ -107,6 +107,21 @@ export const enterpriseSiteAdminAreaRoutes: readonly SiteAdminAreaRoute[] = (
             render: props => <Redirect to={props.location.pathname.replace('/code-intelligence/', '/code-graph/')} />,
         },
 
+        // Code intelligence dashboard routes
+        {
+            path: '/code-graph',
+            exact: true,
+            render: () => <Redirect to="./code-graph/dashboard" />,
+        },
+        {
+            path: '/code-graph/dashboard',
+            render: lazyComponent(
+                () => import('../codeintel/dashboard/pages/GlobalDashboardPage'),
+                'GlobalDashboardPage'
+            ),
+            exact: true,
+        },
+
         // Precise index routes
         {
             path: '/code-graph/indexes',
