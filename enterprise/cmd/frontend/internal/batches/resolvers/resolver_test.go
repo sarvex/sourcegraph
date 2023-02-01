@@ -193,6 +193,11 @@ func TestCreateBatchSpec(t *testing.T) {
 			licenseInfo:    licensingInfo("starter", "batch-changes"),
 			wantErr:        false,
 		},
+		"license expired": {
+			changesetSpecs: changesetSpecs,
+			licenseInfo:    &licensing.Info{Info: license.Info{Tags: []string{"starter", "batch-changes"}, ExpiresAt: time.Now().Add(time.Hour * -8760)}}, // 1 year ago
+			wantErr:        true,
+		},
 		"campaigns license, no limit": {
 			changesetSpecs: changesetSpecs,
 			licenseInfo:    licensingInfo("starter", "campaigns"),
