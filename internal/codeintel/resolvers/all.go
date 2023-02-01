@@ -74,6 +74,7 @@ type PoliciesServiceResolver interface {
 type CodeIntelRepositorySummaryResolver interface {
 	RecentUploads() []LSIFUploadsWithRepositoryNamespaceResolver
 	RecentIndexes() []LSIFIndexesWithRepositoryNamespaceResolver
+	RecentActivity(ctx context.Context) ([]PreciseIndexResolver, error)
 	LastUploadRetentionScan() *gqlutil.DateTime
 	LastIndexScan() *gqlutil.DateTime
 	AvailableIndexers() []InferredAvailableIndexersResolver

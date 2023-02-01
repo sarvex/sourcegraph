@@ -870,6 +870,13 @@ type CodeIntelRepositorySummary {
     recentIndexes: [LSIFIndexesWithRepositoryNamespace!]!
 
     """
+    A list of recent precise indexes for a specific repository. This list contains processing,
+    recently queued, and the most recently processed precise indexes for each distinct indexer
+    and root.
+    """
+    recentActivity: [PreciseIndex!]!
+
+    """
     The last time uploads of this repository were checked against data retention policies.
     """
     lastUploadRetentionScan: DateTime

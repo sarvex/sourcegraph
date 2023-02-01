@@ -1,6 +1,9 @@
 package sharedresolvers
 
 import (
+	"context"
+	"sort"
+
 	resolverstubs "github.com/sourcegraph/sourcegraph/internal/codeintel/resolvers"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
 	"github.com/sourcegraph/sourcegraph/internal/gqlutil"
@@ -79,6 +82,45 @@ func (r *repositorySummaryResolver) RecentIndexes() []resolverstubs.LSIFIndexesW
 	}
 
 	return resolvers
+}
+
+func (r *repositorySummaryResolver) RecentActivity(ctx context.Context) ([]resolverstubs.PreciseIndexResolver, error) {
+	uploadIDs := map[int]struct{}{}
+	var resolvers []resolverstubs.PreciseIndexResolver
+	for _, recentUploads := range r.summary.RecentUploads {
+		for _, upload := range recentUploads.Uploads {
+			upload := upload
+
+			resolver, err := NewPreciseIndexResolver(ctx, r.autoindexingSvc, r.uploadsSvc, r.policySvc, r.prefetcher, r.locationResolver, r.errTracer, &upload, nil)
+			if err != nil {
+				return nil, err
+			}
+
+			uploadIDs[upload.ID] = struct{}{}
+			resolvers = append(resolvers, resolver)
+		}
+	}
+	for _, recentIndexes := range r.summary.RecentIndexes {
+		for _, index := range recentIndexes.Indexes {
+			index := index
+
+			if index.AssociatedUploadID != nil {
+				if _, ok := uploadIDs[*index.AssociatedUploadID]; ok {
+					continue
+				}
+			}
+
+			resolver, err := NewPreciseIndexResolver(ctx, r.autoindexingSvc, r.uploadsSvc, r.policySvc, r.prefetcher, r.locationResolver, r.errTracer, nil, &index)
+			if err != nil {
+				return nil, err
+			}
+
+			resolvers = append(resolvers, resolver)
+		}
+	}
+
+	sort.Slice(resolvers, func(i, j int) bool { return resolvers[i].ID() < resolvers[j].ID() })
+	return resolvers, nil
 }
 
 func (r *repositorySummaryResolver) LastUploadRetentionScan() *gqlutil.DateTime {
