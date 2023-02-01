@@ -75,7 +75,7 @@ export const createDefaultSuggestions = ({
     showWhenEmpty,
 }: Omit<DefaultSuggestionSourcesOptions, 'fetchSuggestions'> & {
     fetchSuggestions: (query: string) => Observable<SearchMatch[]>
-    history?: H.History
+    history?: Pick<H.History, 'push'>
     /**
      * Whether or not to allow suggestions selection by Enter key.
      */

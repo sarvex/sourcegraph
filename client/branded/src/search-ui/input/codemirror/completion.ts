@@ -131,7 +131,7 @@ export type StandardSuggestionSource = SuggestionSource<CompletionResult | null,
  */
 export function searchQueryAutocompletion(
     sources: StandardSuggestionSource[],
-    history?: H.History,
+    history?: Pick<H.History, 'push'>,
     // By default we do not enable suggestion selection with enter because that
     // interferes with the query submission logic.
     applyOnEnter = false
