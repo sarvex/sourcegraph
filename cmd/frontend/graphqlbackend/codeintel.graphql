@@ -681,7 +681,7 @@ extend type Repository {
     ): LSIFIndexConnection!
 
     """
-    Provides a summary of the most reecent upload and index status.
+    Provides a summary of the most recent upload and index status.
     """
     codeIntelSummary: CodeIntelRepositorySummary!
 
@@ -852,7 +852,7 @@ type LineRange {
 }
 
 """
-A summary of the most reecent upload and index status.
+A summary of the most recent upload and index status.
 """
 type CodeIntelRepositorySummary {
     """
