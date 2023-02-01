@@ -23,7 +23,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/auth/userpasswd"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/siteid"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/webhooks"
-	"github.com/sourcegraph/sourcegraph/internal/actor"
+	sgactor "github.com/sourcegraph/sourcegraph/internal/actor"
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/auth"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
@@ -173,7 +173,7 @@ type JSContext struct {
 // request.
 func NewJSContextFromRequest(req *http.Request, db database.DB) JSContext {
 	ctx := req.Context()
-	a := actor.FromContext(ctx)
+	a := sgactor.FromContext(ctx)
 
 	headers := make(map[string]string)
 	headers["x-sourcegraph-client"] = globals.ExternalURL().String()
@@ -404,7 +404,7 @@ func resolveUserCanSignOut(ctx context.Context, user *types.User) *bool {
 	// 🚨 SECURITY: Only the user can view their session information, because it is
 	// retrieved from the context of this request (and not persisted in a way that is
 	// queryable).
-	a := actor.FromContext(ctx)
+	a := sgactor.FromContext(ctx)
 	if !a.IsAuthenticated() || a.UID != user.ID {
 		return nil
 	}
