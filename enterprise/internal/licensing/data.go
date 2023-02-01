@@ -94,6 +94,9 @@ func (f *FeatureBatchChanges) Check(info *Info) error {
 	if info == nil {
 		return NewFeatureNotActivatedError(fmt.Sprintf("The feature %q is not activated because it requires a valid Sourcegraph license. Purchase a Sourcegraph subscription to activate this feature.", f.FeatureName()))
 	}
+	if info.IsExpiredWithGracePeriod() {
+		return NewFeatureNotActivatedError(fmt.Sprintf("The feature %q is not activated because it requires a valid Sourcegraph license. Purchase a Sourcegraph subscription to activate this feature.", f.FeatureName()))
+	}
 
 	// If the deprecated campaigns are enabled, use unrestricted batch changes
 	if FeatureCampaigns.Check(info) == nil {
