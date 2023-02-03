@@ -201,10 +201,10 @@ const ConfigurationStateBadge: FunctionComponent<ConfigurationStateBadgeProps> =
     </small>
 )
 
-// formatTreeData constructs an outline suitable for use with the wildcard <Tree /> component.
-// This function constructs a file tree outline with a dummy root node (un-rendered) so that we
-// can display explicit data for the root directory. We also attempt to collapse any runs of
-// directories that have no data of its own to display and only one child.
+// Constructs an outline suitable for use with the wildcard <Tree /> component. This function constructs
+// a file tree outline with a dummy root node (un-rendered) so that we can display explicit data for the
+// root directory. We also attempt to collapse any runs of directories that have no data of its own to
+// display and only one child.
 function buildTreeData(dataPaths: Set<string>): TreeNodeWithDisplayName[] {
     // Construct a list of paths reachable from the given input paths by sanitizing the input path,
     // exploding the resulting path list into directory segments, constructing all prefixes of the
