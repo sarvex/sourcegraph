@@ -67,11 +67,6 @@ extend type Mutation {
     queueAutoIndexJobsForRepo(repository: ID!, rev: String, configuration: String): [LSIFIndex!]!
 
     """
-    TODO
-    """
-    inferAutoIndexJobsForRepo(repository: ID!, rev: String, script: String): [AutoIndexJobDescription]!
-
-    """
     Deletes an LSIF upload.
     """
     deleteLSIFUpload(id: ID!): EmptyResponse
@@ -429,6 +424,11 @@ extend type Query {
     only the value set via UI/GraphQL.
     """
     codeIntelligenceInferenceScript: String!
+
+    """
+    TODO
+    """
+    inferAutoIndexJobsForRepo(repository: ID!, rev: String, script: String): [AutoIndexJobDescription!]!
 }
 
 """

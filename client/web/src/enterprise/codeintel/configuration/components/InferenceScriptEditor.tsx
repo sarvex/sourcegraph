@@ -12,6 +12,7 @@ import { INFERENCE_SCRIPT, useInferenceScript } from '../hooks/useInferenceScrip
 import { useUpdateInferenceScript } from '../hooks/useUpdateInferenceScript'
 
 import styles from './CodeIntelConfigurationPageHeader.module.scss'
+import { useInferJobs } from '../hooks/useInferJobs'
 
 export interface InferenceScriptEditorProps extends TelemetryProps {
     authenticatedUser: AuthenticatedUser | null
@@ -44,20 +45,7 @@ export const InferenceScriptEditor: FunctionComponent<InferenceScriptEditorProps
         propsGenerator: SaveToolbarPropsGenerator<{}>
     }>(
         () => ({
-            saveToolbar: ({ dirty, saving, error, onSave, onDiscard, saveDiscardDisabled }) => (
-                <SaveToolbar
-                    dirty={dirty}
-                    saving={saving}
-                    onSave={onSave}
-                    error={error}
-                    saveDiscardDisabled={saveDiscardDisabled}
-                    onDiscard={onDiscard}
-                >
-                    <Button type="button" title="TRY ME, SUCKA" variant="link" onClick={() => alert('foo!')}>
-                        TRY ME, SUCKA
-                    </Button>
-                </SaveToolbar>
-            ),
+            saveToolbar: SaveToolbar,
             propsGenerator: props => {
                 const mergedProps = {
                     ...props,
@@ -84,8 +72,7 @@ export const InferenceScriptEditor: FunctionComponent<InferenceScriptEditorProps
                             text: <>Code graph inference script</>,
                         },
                     ]}
-                    description={`Lua script that emits complete and/or partial auto-indexing
-                job specifications. `}
+                    description={`Lua script that emits complete and/or partial auto-indexing job specifications. `}
                     className="mb-3"
                 />
             </div>
@@ -109,19 +96,57 @@ export const InferenceScriptEditor: FunctionComponent<InferenceScriptEditorProps
             {loadingScript ? (
                 <LoadingSpinner />
             ) : (
-                <DynamicallyImportedMonacoSettingsEditor
-                    value={inferenceScript}
-                    language="lua"
-                    canEdit={authenticatedUser?.siteAdmin}
-                    readOnly={!authenticatedUser?.siteAdmin}
-                    onSave={save}
-                    saving={isUpdating}
-                    height={600}
-                    isLightTheme={isLightTheme}
-                    telemetryService={telemetryService}
-                    customSaveToolbar={authenticatedUser?.siteAdmin ? customToolbar : undefined}
-                    onDirtyChange={setDirty}
-                />
+                <>
+                    <DynamicallyImportedMonacoSettingsEditor
+                        value={inferenceScript}
+                        language="lua"
+                        canEdit={authenticatedUser?.siteAdmin}
+                        readOnly={!authenticatedUser?.siteAdmin}
+                        onSave={save}
+                        saving={isUpdating}
+                        height={600}
+                        isLightTheme={isLightTheme}
+                        telemetryService={telemetryService}
+                        customSaveToolbar={authenticatedUser?.siteAdmin ? customToolbar : undefined}
+                        onDirtyChange={setDirty}
+                    />
+
+                    <Results inferenceScript={inferenceScript} />
+                </>
+            )}
+        </>
+    )
+}
+
+interface ResultsProps {
+    inferenceScript: string
+}
+
+const Results: FunctionComponent<ResultsProps> = ({ inferenceScript }) => {
+    if (inferenceScript === '') {
+        return <>no script</>
+    }
+
+    const { data, loading, error } = useInferJobs({
+        variables: { repository: 'UmVwb3NpdG9yeToyMTE3NjM4', rev: 'HEAD', script: inferenceScript },
+    })
+
+    return (
+        <>
+            {loading ? (
+                <LoadingSpinner />
+            ) : error ? (
+                <ErrorAlert prefix="Failed to run inference script" error={error} />
+            ) : data && data.inferAutoIndexJobsForRepo.length > 0 ? (
+                <ul>
+                    {data.inferAutoIndexJobsForRepo.map(job => (
+                        <li>
+                            Inferred indexing job for {job.root} by {job.indexer?.name}
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <>No jobs inferred.</>
             )}
         </>
     )
