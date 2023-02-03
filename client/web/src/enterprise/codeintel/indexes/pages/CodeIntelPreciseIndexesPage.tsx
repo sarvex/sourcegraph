@@ -262,6 +262,19 @@ export const CodeIntelPreciseIndexesPage: FunctionComponent<CodeIntelPreciseInde
 
             {!!location.state && <FlashMessage state={location.state.modal} message={location.state.message} />}
 
+            {authenticatedUser?.siteAdmin && repo && (
+                <Container className="mb-2">
+                    View <Link to="/site-admin/code-graph/indexes">additional precise indexes</Link> for other
+                    repositories.
+                </Container>
+            )}
+
+            {repo && authenticatedUser?.siteAdmin && (
+                <Container className="mb-2">
+                    <EnqueueForm repoId={repo.id} querySubject={querySubject} />
+                </Container>
+            )}
+
             {repo && commitGraphMetadata && (
                 <Alert variant={commitGraphMetadata.stale ? 'primary' : 'success'} aria-live="off">
                     {commitGraphMetadata.stale ? (
@@ -278,12 +291,6 @@ export const CodeIntelPreciseIndexesPage: FunctionComponent<CodeIntelPreciseInde
                         </>
                     )}
                 </Alert>
-            )}
-
-            {repo && authenticatedUser?.siteAdmin && (
-                <Container className="mb-2">
-                    <EnqueueForm repoId={repo.id} querySubject={querySubject} />
-                </Container>
             )}
 
             {isErrorLike(deleteError) && <ErrorAlert prefix="Error deleting precise index" error={deleteError} />}

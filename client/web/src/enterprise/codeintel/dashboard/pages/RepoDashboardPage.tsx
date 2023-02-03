@@ -1,7 +1,17 @@
 import { mdiCheck, mdiClose, mdiFolderOpenOutline, mdiFolderOutline, mdiTimerSand } from '@mdi/js'
 import { Timestamp } from '@sourcegraph/branded/src/components/Timestamp'
 import { isDefined } from '@sourcegraph/common'
-import { ErrorAlert, Icon, Link, LoadingSpinner, PageHeader, Tree, TreeNode as WTreeNode } from '@sourcegraph/wildcard'
+import { AuthenticatedUser } from '@sourcegraph/shared/src/auth'
+import {
+    Container,
+    ErrorAlert,
+    Icon,
+    Link,
+    LoadingSpinner,
+    PageHeader,
+    Tree,
+    TreeNode as WTreeNode,
+} from '@sourcegraph/wildcard'
 import classNames from 'classnames'
 import { FunctionComponent } from 'react'
 import { PreciseIndexFields, PreciseIndexState } from '../../../../graphql-operations'
@@ -10,10 +20,11 @@ import { useCodeIntelStatus } from '../hooks/useCodeIntelStatus'
 import styles from './RepoDashboardPage.module.scss'
 
 export interface RepoDashboardPageProps {
+    authenticatedUser: AuthenticatedUser | null
     repo: { id: string; name: string }
 }
 
-export const RepoDashboardPage: FunctionComponent<RepoDashboardPageProps> = ({ repo }) => {
+export const RepoDashboardPage: FunctionComponent<RepoDashboardPageProps> = ({ authenticatedUser, repo }) => {
     const { data, loading, error } = useCodeIntelStatus({ variables: { repository: repo.name } })
 
     const indexesByIndexerNameByRoot = new Map(
@@ -52,6 +63,13 @@ export const RepoDashboardPage: FunctionComponent<RepoDashboardPageProps> = ({ r
                 ]}
                 className="mb-3"
             />
+
+            {authenticatedUser?.siteAdmin && repo && (
+                <Container className="mb-2">
+                    View <Link to="/site-admin/code-graph/dashboard">dashbard</Link> for all repositories.
+                </Container>
+            )}
+
             <div>
                 <small className="d-block">
                     This repository was scanned for auto-indexing{' '}
