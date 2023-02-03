@@ -4,6 +4,8 @@ import (
 	"context"
 	"sort"
 
+	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/autoindexing/shared"
+	"github.com/sourcegraph/sourcegraph/internal/api"
 	resolverstubs "github.com/sourcegraph/sourcegraph/internal/codeintel/resolvers"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
 	"github.com/sourcegraph/sourcegraph/internal/gqlutil"
@@ -17,17 +19,33 @@ type InferredAvailableIndexers struct {
 }
 
 type summaryResolver struct {
-	// TODO
+	summary          shared.Summary
+	locationResolver *CachedLocationResolver
 }
 
-func NewSummaryResolver() resolverstubs.CodeIntelSummaryResolver {
+func NewSummaryResolver(summary shared.Summary, locationResolver *CachedLocationResolver) resolverstubs.CodeIntelSummaryResolver {
 	return &summaryResolver{
-		// TODO
+		summary:          summary,
+		locationResolver: locationResolver,
 	}
 }
 
-func (r *summaryResolver) Hello() string {
-	return "HELLO THERE YOU BIG OLD WORLD!!!"
+func (r *summaryResolver) NumRepositoriesWithCodeIntelligence(ctx context.Context) (int32, error) {
+	return int32(r.summary.NumRepositoriesWithCodeIntelligence), nil
+}
+
+func (r *summaryResolver) RepositoriesWithErrors(ctx context.Context) ([]resolverstubs.RepositoryResolver, error) {
+	var resolvers []resolverstubs.RepositoryResolver
+	for _, repositoryID := range r.summary.RepositoryIDsWithErrors {
+		resolver, err := r.locationResolver.Repository(ctx, api.RepoID(repositoryID))
+		if err != nil {
+			return nil, err
+		}
+
+		resolvers = append(resolvers, resolver)
+	}
+
+	return resolvers, nil
 }
 
 type repositorySummaryResolver struct {

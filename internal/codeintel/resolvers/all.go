@@ -73,7 +73,8 @@ type PoliciesServiceResolver interface {
 }
 
 type CodeIntelSummaryResolver interface {
-	Hello() string
+	NumRepositoriesWithCodeIntelligence(ctx context.Context) (int32, error)
+	RepositoriesWithErrors(ctx context.Context) ([]RepositoryResolver, error)
 }
 
 type CodeIntelRepositorySummaryResolver interface {

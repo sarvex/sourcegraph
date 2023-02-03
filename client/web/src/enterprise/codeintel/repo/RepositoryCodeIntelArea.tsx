@@ -69,12 +69,10 @@ const CodeIntelConfigurationPolicyPage = lazyComponent<
 export const codeIntelAreaRoutes: readonly CodeIntelAreaRoute[] = [
     {
         path: '/',
-        exact: true,
-        render: () => <Navigate to="./dashboaord" replace={true} />,
+        render: () => <Navigate to="./dashboard" replace={true} />,
     },
     {
         path: '/dashboard',
-        exact: true,
         render: props => <RepoDashboardPage {...props} />,
     },
     {

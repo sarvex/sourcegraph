@@ -860,7 +860,9 @@ type LineRange {
 A summary of code intelligence on the instance.
 """
 type CodeIntelSummary {
-    hello: String!
+    numRepositoriesWithCodeIntelligence: Int!
+    repositoriesWithErrors: [CodeIntelRepository!]! # TODO - paginate
+    # TODO - add reporting of stale intelligence
 }
 
 """

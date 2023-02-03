@@ -96,7 +96,15 @@ export const preciseIndexFieldsFragment = gql`
 export const globalCodeIntelStatusQuery = gql`
     query GlobalCodeIntelStatus {
         codeIntelSummary {
-            hello
+            numRepositoriesWithCodeIntelligence
+            repositoriesWithErrors {
+                name
+                url
+                externalRepository {
+                    serviceID
+                    serviceType
+                }
+            }
         }
     }
 `

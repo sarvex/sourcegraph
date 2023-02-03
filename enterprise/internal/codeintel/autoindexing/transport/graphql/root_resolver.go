@@ -393,11 +393,17 @@ func (r *rootResolver) CodeIntelSummary(ctx context.Context) (_ resolverstubs.Co
 	ctx, _, endObservation := r.operations.summary.WithErrors(ctx, &err, observation.Args{LogFields: []log.Field{}})
 	endObservation.OnCancel(ctx, 1, observation.Args{})
 
-	// TODO
+	summary, err := r.autoindexSvc.Summary(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	return sharedresolvers.NewSummaryResolver(
-	// TODO
-	), nil
+	// Create a new prefetcher here as we only want to cache repositories in the same graphQL request,
+	// not across different request
+	db := r.autoindexSvc.GetUnsafeDB()
+	locationResolver := sharedresolvers.NewCachedLocationResolver(db, gitserver.NewClient())
+
+	return sharedresolvers.NewSummaryResolver(summary, locationResolver), nil
 }
 
 func (r *rootResolver) RepositorySummary(ctx context.Context, id graphql.ID) (_ resolverstubs.CodeIntelRepositorySummaryResolver, err error) {

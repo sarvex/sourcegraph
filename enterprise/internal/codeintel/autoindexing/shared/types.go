@@ -46,3 +46,8 @@ type ReindexIndexesOptions struct {
 	RepositoryID  int
 	WithoutUpload bool
 }
+
+type Summary struct {
+	NumRepositoriesWithCodeIntelligence int
+	RepositoryIDsWithErrors             []int
+}

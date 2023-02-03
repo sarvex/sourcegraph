@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/keegancsmith/sqlf"
 	logger "github.com/sourcegraph/log"
 
 	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/autoindexing/shared"
@@ -18,6 +19,8 @@ type Store interface {
 	// Transactions
 	Transact(ctx context.Context) (Store, error)
 	Done(err error) error
+
+	Summary(ctx context.Context) (shared.Summary, error)
 
 	// Commits
 	ProcessStaleSourcedCommits(
@@ -103,4 +106,58 @@ func (s *store) Done(err error) error {
 // resolvers that have the old convention of using the database handle directly.
 func (s *store) GetUnsafeDB() database.DB {
 	return database.NewDBWith(s.logger, s.db)
+}
+
+func (s *store) Summary(ctx context.Context) (shared.Summary, error) {
+	numRepositoriesWithCodeIntelligence, _, err := basestore.ScanFirstInt(s.db.Query(ctx, sqlf.Sprintf(`
+		SELECT COUNT(DISTINCT r.id)
+		FROM lsif_uploads u
+		JOIN repo r ON r.id = u.repository_id
+		WHERE
+			u.state = 'completed' AND
+			r.deleted_at IS NULL AND
+			r.blocked IS NULL
+	`)))
+	if err != nil {
+		return shared.Summary{}, err
+	}
+
+	// TODO - combine to get count?
+	repositoriesWithErrors, err := basestore.ScanInts(s.db.Query(ctx, sqlf.Sprintf(`
+		WITH
+		ranked_completed_indexes AS (
+			SELECT
+				u.repository_id,
+				u.state,
+				RANK() OVER (PARTITION BY repository_id, root, indexer ORDER BY finished_at DESC) AS rank
+			FROM lsif_indexes u
+			WHERE u.state NOT IN ('queued', 'processing', 'deleted')
+		),
+		ranked_completed_uploads AS (
+			SELECT
+				u.repository_id,
+				u.state,
+				RANK() OVER (PARTITION BY repository_id, root, indexer ORDER BY finished_at DESC) AS rank
+			FROM lsif_uploads u
+			WHERE u.state NOT IN ('uploading', 'queued', 'processing', 'deleted')
+		)
+		SELECT r.id
+		FROM repo r
+		WHERE
+			r.deleted_at IS NULL AND
+			r.blocked IS NULL AND
+			r.id IN (
+				SELECT repository_id FROM ranked_completed_indexes WHERE rank = 1 AND state = 'failed'
+				UNION
+				SELECT repository_id FROM ranked_completed_uploads WHERE rank = 1 AND state = 'failed'
+			)
+	`)))
+	if err != nil {
+		return shared.Summary{}, err
+	}
+
+	return shared.Summary{
+		NumRepositoriesWithCodeIntelligence: numRepositoriesWithCodeIntelligence,
+		RepositoryIDsWithErrors:             repositoriesWithErrors,
+	}, nil
 }
