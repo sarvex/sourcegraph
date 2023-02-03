@@ -389,6 +389,17 @@ func (r *rootResolver) InferedIndexConfigurationHints(ctx context.Context, repos
 	return hints, nil
 }
 
+func (r *rootResolver) CodeIntelSummary(ctx context.Context) (_ resolverstubs.CodeIntelSummaryResolver, err error) {
+	ctx, _, endObservation := r.operations.summary.WithErrors(ctx, &err, observation.Args{LogFields: []log.Field{}})
+	endObservation.OnCancel(ctx, 1, observation.Args{})
+
+	// TODO
+
+	return sharedresolvers.NewSummaryResolver(
+	// TODO
+	), nil
+}
+
 func (r *rootResolver) RepositorySummary(ctx context.Context, id graphql.ID) (_ resolverstubs.CodeIntelRepositorySummaryResolver, err error) {
 	ctx, errTracer, endObservation := r.operations.repositorySummary.WithErrors(ctx, &err, observation.Args{LogFields: []log.Field{
 		log.String("repoID", string(id)),

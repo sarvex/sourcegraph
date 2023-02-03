@@ -16,6 +16,20 @@ type InferredAvailableIndexers struct {
 	URL   string
 }
 
+type summaryResolver struct {
+	// TODO
+}
+
+func NewSummaryResolver() resolverstubs.CodeIntelSummaryResolver {
+	return &summaryResolver{
+		// TODO
+	}
+}
+
+func (r *summaryResolver) Hello() string {
+	return "HELLO THERE YOU BIG OLD WORLD!!!"
+}
+
 type repositorySummaryResolver struct {
 	autoindexingSvc   AutoIndexingService
 	uploadsSvc        UploadsService

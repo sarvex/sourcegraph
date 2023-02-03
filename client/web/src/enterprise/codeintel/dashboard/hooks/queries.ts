@@ -95,10 +95,8 @@ export const preciseIndexFieldsFragment = gql`
 
 export const globalCodeIntelStatusQuery = gql`
     query GlobalCodeIntelStatus {
-        repository(name: "foo") {
-            codeIntelSummary {
-                lastIndexScan
-            }
+        codeIntelSummary {
+            hello
         }
     }
 `

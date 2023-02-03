@@ -313,6 +313,11 @@ extend type Query {
     ): PreciseIndexConnection!
 
     """
+    Provides a summary of code intelligence on the instance.
+    """
+    codeIntelSummary: CodeIntelSummary!
+
+    """
     The repository's LSIF uploads.
     """
     lsifUploads(
@@ -849,6 +854,13 @@ type LineRange {
     The length.
     """
     length: Int!
+}
+
+"""
+A summary of code intelligence on the instance.
+"""
+type CodeIntelSummary {
+    hello: String!
 }
 
 """
