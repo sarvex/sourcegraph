@@ -3,8 +3,8 @@ import { ApolloError } from '@apollo/client'
 import { useQuery } from '@sourcegraph/http-client'
 
 import {
-    CodeIntelStatus2Result,
-    CodeIntelStatus2Variables,
+    RepoCodeIntelStatusResult,
+    RepoCodeIntelStatusVariables,
     InferedPreciseSupportLevel,
     InferredAvailableIndexersFields,
     PreciseIndexFields,
@@ -12,19 +12,19 @@ import {
     SearchBasedCodeIntelSupportFields,
 } from '../../../../graphql-operations'
 
-import { codeIntelStatusQuery } from './queries'
+import { repoCodeIntelStatusQuery } from './queries'
 
-export interface UseCodeIntelStatus2Parameters {
-    variables: CodeIntelStatus2Variables
+export interface UseRepoCodeIntelStatusParameters {
+    variables: RepoCodeIntelStatusVariables
 }
 
-export interface UseCodeIntelStatusResult {
-    data?: UseCodeIntelStatusPayload
+export interface UseRepoCodeIntelStatusResult {
+    data?: UseRepoCodeIntelStatusPayload
     error?: ApolloError
     loading: boolean
 }
 
-export interface UseCodeIntelStatusPayload {
+export interface UseRepoCodeIntelStatusPayload {
     lastIndexScan?: string
     lastUploadRetentionScan?: string
     availableIndexers: InferredAvailableIndexersFields[]
@@ -33,12 +33,14 @@ export interface UseCodeIntelStatusPayload {
     searchBasedSupport?: SearchBasedCodeIntelSupportFields[]
 }
 
-export const useCodeIntelStatus = ({ variables }: UseCodeIntelStatus2Parameters): UseCodeIntelStatusResult => {
+export const useRepoCodeIntelStatus = ({
+    variables,
+}: UseRepoCodeIntelStatusParameters): UseRepoCodeIntelStatusResult => {
     const {
         data: rawData,
         error,
         loading,
-    } = useQuery<CodeIntelStatus2Result, CodeIntelStatus2Variables>(codeIntelStatusQuery, {
+    } = useQuery<RepoCodeIntelStatusResult, RepoCodeIntelStatusVariables>(repoCodeIntelStatusQuery, {
         variables,
         notifyOnNetworkStatusChange: false,
         fetchPolicy: 'no-cache',
@@ -51,7 +53,7 @@ export const useCodeIntelStatus = ({ variables }: UseCodeIntelStatus2Parameters)
     }
 
     const summary = repo.codeIntelSummary
-    const common: Omit<UseCodeIntelStatusPayload, 'preciseSupport' | 'searchBasedSupport'> = {
+    const common: Omit<UseRepoCodeIntelStatusPayload, 'preciseSupport' | 'searchBasedSupport'> = {
         availableIndexers: summary.availableIndexers,
         lastIndexScan: summary.lastIndexScan || undefined,
         lastUploadRetentionScan: summary.lastUploadRetentionScan || undefined,

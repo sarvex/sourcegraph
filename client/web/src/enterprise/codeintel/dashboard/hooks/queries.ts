@@ -93,8 +93,18 @@ export const preciseIndexFieldsFragment = gql`
     }
 `
 
-export const codeIntelStatusQuery = gql`
-    query CodeIntelStatus2($repository: String!) {
+export const globalCodeIntelStatusQuery = gql`
+    query GlobalCodeIntelStatus {
+        repository(name: "foo") {
+            codeIntelSummary {
+                lastIndexScan
+            }
+        }
+    }
+`
+
+export const repoCodeIntelStatusQuery = gql`
+    query RepoCodeIntelStatus($repository: String!) {
         repository(name: $repository) {
             codeIntelSummary {
                 lastIndexScan

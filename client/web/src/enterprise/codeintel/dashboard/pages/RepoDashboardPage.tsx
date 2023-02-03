@@ -15,7 +15,7 @@ import {
 import classNames from 'classnames'
 import { FunctionComponent, useState } from 'react'
 import { PreciseIndexFields, PreciseIndexState } from '../../../../graphql-operations'
-import { useCodeIntelStatus } from '../hooks/useCodeIntelStatus'
+import { useRepoCodeIntelStatus } from '../hooks/useRepoCodeIntelStatus'
 
 import styles from './RepoDashboardPage.module.scss'
 
@@ -33,7 +33,7 @@ interface FilterState {
 const failureStates = new Set([PreciseIndexState.INDEXING_ERRORED, PreciseIndexState.PROCESSING_ERRORED])
 
 export const RepoDashboardPage: FunctionComponent<RepoDashboardPageProps> = ({ authenticatedUser, repo }) => {
-    const { data, loading, error } = useCodeIntelStatus({ variables: { repository: repo.name } })
+    const { data, loading, error } = useRepoCodeIntelStatus({ variables: { repository: repo.name } })
 
     const indexesByIndexerNameByRoot = new Map(
         [
