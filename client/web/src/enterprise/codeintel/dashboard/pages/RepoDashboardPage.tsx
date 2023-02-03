@@ -221,7 +221,7 @@ function buildTreeData(dataPaths: Set<string>): TreeNodeWithDisplayName[] {
     const tryUnlink = (nodes: TreeNodeWithDisplayName[], nodeId: number): boolean => {
         const node = nodes[nodeId]
         if (nodeId === 0 || node.parent === null || node.children.length !== 1) {
-            // Not a candidate - no a unique parent/child to re-link
+            // Not a candidate - no  unique parent/child to re-link
             return false
         }
         const parentId = node.parent
