@@ -70,36 +70,37 @@ export const RepoDashboardPage: FunctionComponent<RepoDashboardPageProps> = ({ a
                 </Container>
             )}
 
-            <div>
-                <small className="d-block">
-                    This repository was scanned for auto-indexing{' '}
-                    {data.lastIndexScan ? <Timestamp date={data.lastIndexScan} /> : <>never</>}.
-                </small>
+            <Container className="mb-2">
+                <div>
+                    <small className="d-block">
+                        This repository was scanned for auto-indexing{' '}
+                        {data.lastIndexScan ? <Timestamp date={data.lastIndexScan} /> : <>never</>}.
+                    </small>
 
-                <small className="d-block">
-                    The indexes of this repository were last considered for expiration{' '}
-                    {data.lastUploadRetentionScan ? <Timestamp date={data.lastUploadRetentionScan} /> : <>never</>}.
-                </small>
-            </div>
-
-            <div className="mt-2">
-                {treeData.length > 0 ? (
-                    <Tree
-                        data={treeData}
-                        defaultExpandedIds={treeData.map(element => element.id)}
-                        renderNode={({ element: { name, displayName }, ...props }) => (
-                            <TreeNode
-                                displayName={displayName}
-                                indexesByIndexerNameForRoot={indexesByIndexerNameByRoot.get(name)}
-                                availableIndexersForRoot={availableIndexersByRoot.get(name)}
-                                {...props}
-                            />
-                        )}
-                    />
-                ) : (
-                    <>No code intel available.</>
-                )}
-            </div>
+                    <small className="d-block">
+                        The indexes of this repository were last considered for expiration{' '}
+                        {data.lastUploadRetentionScan ? <Timestamp date={data.lastUploadRetentionScan} /> : <>never</>}.
+                    </small>
+                </div>
+                <div className="mt-2">
+                    {treeData.length > 0 ? (
+                        <Tree
+                            data={treeData}
+                            defaultExpandedIds={treeData.map(element => element.id)}
+                            renderNode={({ element: { name, displayName }, ...props }) => (
+                                <TreeNode
+                                    displayName={displayName}
+                                    indexesByIndexerNameForRoot={indexesByIndexerNameByRoot.get(name)}
+                                    availableIndexersForRoot={availableIndexersByRoot.get(name)}
+                                    {...props}
+                                />
+                            )}
+                        />
+                    ) : (
+                        <>No code intel available.</>
+                    )}
+                </div>{' '}
+            </Container>
         </>
     ) : (
         <></>
