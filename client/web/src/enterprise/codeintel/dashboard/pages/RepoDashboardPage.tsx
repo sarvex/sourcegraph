@@ -13,7 +13,7 @@ import {
     TreeNode as WTreeNode,
 } from '@sourcegraph/wildcard'
 import classNames from 'classnames'
-import { FunctionComponent } from 'react'
+import { FunctionComponent, useState } from 'react'
 import { PreciseIndexFields, PreciseIndexState } from '../../../../graphql-operations'
 import { useCodeIntelStatus } from '../hooks/useCodeIntelStatus'
 
@@ -23,6 +23,14 @@ export interface RepoDashboardPageProps {
     authenticatedUser: AuthenticatedUser | null
     repo: { id: string; name: string }
 }
+
+interface FilterState {
+    indexers: Set<string>
+    failuresOnly: boolean
+    hideSuggestions: boolean
+}
+
+const failureStates = new Set([PreciseIndexState.INDEXING_ERRORED, PreciseIndexState.PROCESSING_ERRORED])
 
 export const RepoDashboardPage: FunctionComponent<RepoDashboardPageProps> = ({ authenticatedUser, repo }) => {
     const { data, loading, error } = useCodeIntelStatus({ variables: { repository: repo.name } })
@@ -46,7 +54,48 @@ export const RepoDashboardPage: FunctionComponent<RepoDashboardPageProps> = ({ a
         index => sanitize(index.root)
     )
 
-    const treeData = buildTreeData(new Set([...indexesByIndexerNameByRoot.keys(), ...availableIndexersByRoot.keys()]))
+    // Construct tree data without any filters
+    const unfilteredTreeData = buildTreeData(
+        new Set([...indexesByIndexerNameByRoot.keys(), ...availableIndexersByRoot.keys()])
+    )
+
+    const [filterState, setFilterState] = useState<FilterState>({
+        indexers: new Set([]),
+        failuresOnly: false,
+        hideSuggestions: false,
+    })
+
+    // Re-construct tree data using only roots containing filtered data
+    const filteredTreeData = buildTreeData(
+        new Set([
+            // Filter out paths we don't want to display
+            ...[...indexesByIndexerNameByRoot.entries()]
+                .filter(
+                    ([_, indexesByIndexerName]) =>
+                        // Show only paths with a matching indexer, if set
+                        filterState.indexers.size === 0 ||
+                        ([...indexesByIndexerName.keys()].some(indexerName => filterState.indexers.has(indexerName)) &&
+                            // Show only paths with a precise index record in a failure state, if set
+                            (!filterState.failuresOnly ||
+                                [...indexesByIndexerName.values()].some(indexes =>
+                                    failureStates.has(indexes[0].state.toUpperCase() as PreciseIndexState)
+                                )))
+                )
+                .map(([root, _]) => root),
+
+            // Filter out paths we don't want to display
+            ...[...availableIndexersByRoot.entries()]
+                .filter(
+                    ([_, indexers]) =>
+                        // Show nothing if suggestions are hidden
+                        !filterState.hideSuggestions &&
+                        // Show only paths with a matching indexer, if set
+                        (filterState.indexers.size === 0 ||
+                            indexers.some(indexer => filterState.indexers.has(indexer.index)))
+                )
+                .map(([root, _]) => root),
+        ])
+    )
 
     return loading ? (
         <LoadingSpinner />
@@ -66,40 +115,52 @@ export const RepoDashboardPage: FunctionComponent<RepoDashboardPageProps> = ({ a
 
             {authenticatedUser?.siteAdmin && repo && (
                 <Container className="mb-2">
-                    View <Link to="/site-admin/code-graph/dashboard">dashbard</Link> for all repositories.
+                    View <Link to="/site-admin/code-graph/dashboard">dashboard</Link> for all repositories.
                 </Container>
             )}
 
             <Container className="mb-2">
-                <div>
-                    <small className="d-block">
-                        This repository was scanned for auto-indexing{' '}
-                        {data.lastIndexScan ? <Timestamp date={data.lastIndexScan} /> : <>never</>}.
-                    </small>
+                <small className="d-block">
+                    This repository was scanned for auto-indexing{' '}
+                    {data.lastIndexScan ? <Timestamp date={data.lastIndexScan} /> : <>never</>}.
+                </small>
 
-                    <small className="d-block">
-                        The indexes of this repository were last considered for expiration{' '}
-                        {data.lastUploadRetentionScan ? <Timestamp date={data.lastUploadRetentionScan} /> : <>never</>}.
-                    </small>
-                </div>
-                <div className="mt-2">
-                    {treeData.length > 0 ? (
-                        <Tree
-                            data={treeData}
-                            defaultExpandedIds={treeData.map(element => element.id)}
-                            renderNode={({ element: { name, displayName }, ...props }) => (
-                                <TreeNode
-                                    displayName={displayName}
-                                    indexesByIndexerNameForRoot={indexesByIndexerNameByRoot.get(name)}
-                                    availableIndexersForRoot={availableIndexersByRoot.get(name)}
-                                    {...props}
-                                />
-                            )}
-                        />
-                    ) : (
-                        <>No code intel available.</>
-                    )}
-                </div>{' '}
+                <small className="d-block">
+                    The indexes of this repository were last considered for expiration{' '}
+                    {data.lastUploadRetentionScan ? <Timestamp date={data.lastUploadRetentionScan} /> : <>never</>}.
+                </small>
+            </Container>
+
+            <Container className="mb-2">
+                {unfilteredTreeData.length > 0 ? (
+                    <>
+                        <div>
+                            <div>NUM SUCCESSFUL PROJECTS</div>
+                            <div>NUM FAILURES</div>
+                            <div>NUM CONFIGURABLE</div>
+                        </div>
+
+                        {filteredTreeData.length > 0 ? (
+                            <Tree
+                                data={filteredTreeData}
+                                defaultExpandedIds={filteredTreeData.map(element => element.id)}
+                                renderNode={({ element: { name, displayName }, ...props }) => (
+                                    <TreeNode
+                                        displayName={displayName}
+                                        filterState={filterState}
+                                        indexesByIndexerNameForRoot={indexesByIndexerNameByRoot.get(name)}
+                                        availableIndexersForRoot={availableIndexersByRoot.get(name)}
+                                        {...props}
+                                    />
+                                )}
+                            />
+                        ) : (
+                            <>No code intel to display.</>
+                        )}
+                    </>
+                ) : (
+                    <>No code intel available.</>
+                )}
             </Container>
         </>
     ) : (
@@ -111,6 +172,7 @@ interface TreeNodeProps {
     displayName: string
     isBranch: boolean
     isExpanded: boolean
+    filterState: FilterState
     indexesByIndexerNameForRoot?: Map<string, PreciseIndexFields[]>
     availableIndexersForRoot?: IndexerDescription[]
 }
@@ -129,6 +191,7 @@ const TreeNode: FunctionComponent<TreeNodeProps> = ({
     displayName,
     isBranch,
     isExpanded,
+    filterState,
     indexesByIndexerNameForRoot,
     availableIndexersForRoot,
 }) => (
@@ -142,13 +205,27 @@ const TreeNode: FunctionComponent<TreeNodeProps> = ({
             {displayName}
         </div>
 
-        {[...(indexesByIndexerNameForRoot?.entries() || [])].sort(byKey).map(([key, value]) => (
-            <IndexStateBadge key={key} indexes={value} />
-        ))}
+        {[...(indexesByIndexerNameForRoot?.entries() || [])]
+            .sort(byKey)
+            .filter(
+                ([indexerName, indexes]) =>
+                    (filterState.indexers.size === 0 || filterState.indexers.has(indexerName)) &&
+                    (!filterState.failuresOnly ||
+                        indexes.some(index => failureStates.has(index.state.toUpperCase() as PreciseIndexState)))
+            )
+            .map(([indexerName, indexes]) => (
+                <IndexStateBadge key={indexerName} indexes={indexes} />
+            ))}
 
-        {availableIndexersForRoot?.map(indexer => (
-            <ConfigurationStateBadge indexer={indexer} />
-        ))}
+        {availableIndexersForRoot
+            ?.filter(
+                indexer =>
+                    !filterState.hideSuggestions &&
+                    (filterState.indexers.size === 0 || filterState.indexers.has(indexer.index))
+            )
+            .map(indexer => (
+                <ConfigurationStateBadge indexer={indexer} />
+            ))}
     </div>
 )
 
@@ -245,6 +322,10 @@ function buildTreeData(dataPaths: Set<string>): TreeNodeWithDisplayName[] {
             // Not a candidate - no  unique parent/child to re-link
             return false
         }
+        if (node.displayName === '/') {
+            // usability :comfy:
+            return false
+        }
         const parentId = node.parent
         const childId = node.children[0]
 
@@ -327,9 +408,9 @@ function groupBy<V, K>(values: V[], f: (value: V) => K): Map<K, V[]> {
     return values.reduce((acc, val) => acc.set(f(val), (acc.get(f(val)) || []).concat([val])), new Map<K, V[]>())
 }
 
-// Return the list of keys for the associated vlalues for which the given predicate returned true.
+// Return the list of keys for the associated values for which the given predicate returned true.
 function keysMatchingPredicate<K, V>(m: Map<K, V>, f: (value: V) => boolean): K[] {
-    return [...m.entries()].map(([k, v]): K | undefined => (f(v) ? k : undefined)).filter(isDefined)
+    return [...m.entries()].filter(([_, v]) => f(v)).map(([k, _]) => k)
 }
 
 // Create a node with a default display name based on name (a filepath in this case)
