@@ -1,7 +1,7 @@
 import { FunctionComponent, useCallback, useMemo, useState } from 'react'
 
 import { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
-import { LoadingSpinner, PageHeader, screenReaderAnnounce, ErrorAlert } from '@sourcegraph/wildcard'
+import { LoadingSpinner, PageHeader, screenReaderAnnounce, ErrorAlert, Button } from '@sourcegraph/wildcard'
 
 import { AuthenticatedUser } from '../../../../auth'
 import { PageTitle } from '../../../../components/PageTitle'
@@ -44,7 +44,20 @@ export const InferenceScriptEditor: FunctionComponent<InferenceScriptEditorProps
         propsGenerator: SaveToolbarPropsGenerator<{}>
     }>(
         () => ({
-            saveToolbar: SaveToolbar,
+            saveToolbar: ({ dirty, saving, error, onSave, onDiscard, saveDiscardDisabled }) => (
+                <SaveToolbar
+                    dirty={dirty}
+                    saving={saving}
+                    onSave={onSave}
+                    error={error}
+                    saveDiscardDisabled={saveDiscardDisabled}
+                    onDiscard={onDiscard}
+                >
+                    <Button type="button" title="TRY ME, SUCKA" variant="link" onClick={() => alert('foo!')}>
+                        TRY ME, SUCKA
+                    </Button>
+                </SaveToolbar>
+            ),
             propsGenerator: props => {
                 const mergedProps = {
                     ...props,
@@ -62,6 +75,7 @@ export const InferenceScriptEditor: FunctionComponent<InferenceScriptEditorProps
     const title = (
         <>
             <PageTitle title="Code graph inference script" />
+
             <div className={styles.grid}>
                 <PageHeader
                     headingElement="h2"
