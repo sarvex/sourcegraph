@@ -229,6 +229,17 @@ func (r *rootResolver) LSIFIndexesByRepo(ctx context.Context, args *resolverstub
 	return sharedresolvers.NewIndexConnectionResolver(r.autoindexSvc, r.uploadSvc, r.policySvc, indexConnectionResolver, prefetcher, traceErrs), nil
 }
 
+// 🚨 SECURITY: Only site admins may infer auto-index jobs
+func (r *rootResolver) InferAutoIndexJobsForRepo(ctx context.Context, args *resolverstubs.InferAutoIndexJobsForRepoArgs) (_ []resolverstubs.AutoIndexJobDescriptionResolver, err error) {
+	ctx, _, endObservation := r.operations.inferAutoIndexJobsForRepo.WithErrors(ctx, &err, observation.Args{LogFields: []log.Field{
+		log.String("repoID", string(args.Repository)),
+	}})
+	endObservation.OnCancel(ctx, 1, observation.Args{})
+
+	// TODO
+	return nil, errors.New("unimplemented")
+}
+
 // 🚨 SECURITY: Only site admins may queue auto-index jobs
 func (r *rootResolver) QueueAutoIndexJobsForRepo(ctx context.Context, args *resolverstubs.QueueAutoIndexJobsForRepoArgs) (_ []resolverstubs.LSIFIndexResolver, err error) {
 	ctx, traceErrs, endObservation := r.operations.queueAutoIndexJobsForRepo.WithErrors(ctx, &err, observation.Args{LogFields: []log.Field{
