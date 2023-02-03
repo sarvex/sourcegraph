@@ -58,7 +58,7 @@ export const RepoDashboardPage: FunctionComponent<RepoDashboardPageProps> = ({ a
                 headingElement="h2"
                 path={[
                     {
-                        text: <>Code intelligence summary</>,
+                        text: <>Code intelligence summary for {repo.name}</>,
                     },
                 ]}
                 className="mb-3"
