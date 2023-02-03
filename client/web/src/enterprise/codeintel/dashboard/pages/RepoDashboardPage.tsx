@@ -1,7 +1,7 @@
 import { mdiCheck, mdiClose, mdiFolderOpenOutline, mdiFolderOutline, mdiTimerSand } from '@mdi/js'
 import { Timestamp } from '@sourcegraph/branded/src/components/Timestamp'
 import { isDefined } from '@sourcegraph/common'
-import { ErrorAlert, Icon, LoadingSpinner, PageHeader, Tree, TreeNode as WTreeNode } from '@sourcegraph/wildcard'
+import { ErrorAlert, Icon, Link, LoadingSpinner, PageHeader, Tree, TreeNode as WTreeNode } from '@sourcegraph/wildcard'
 import classNames from 'classnames'
 import { FunctionComponent } from 'react'
 import { PreciseIndexFields, PreciseIndexState } from '../../../../graphql-operations'
@@ -139,12 +139,14 @@ interface IndexStateBadgeProps {
 
 const IndexStateBadge: FunctionComponent<IndexStateBadgeProps> = ({ indexes }) =>
     indexes && indexes.length > 0 ? (
-        <small className={classNames('float-right', 'ml-2', styles.hint)}>
-            {indexes.map(index => (
-                <IndexStateBadgeIcon index={index} />
-            ))}
-            {indexes[0].indexer ? indexes[0].indexer.name : indexes[0].inputIndexer}
-        </small>
+        <Link to={`./indexes/${indexes[0].id}`}>
+            <small className={classNames('float-right', 'ml-2', styles.hint)}>
+                {indexes.map(index => (
+                    <IndexStateBadgeIcon index={index} />
+                ))}
+                {indexes[0].indexer ? indexes[0].indexer.name : indexes[0].inputIndexer}
+            </small>
+        </Link>
     ) : (
         <></>
     )
