@@ -88,22 +88,22 @@ export const RepoDashboardPage: FunctionComponent<RepoDashboardPageProps> = ({ a
     // Re-construct tree data using only roots containing filtered data
     const filteredTreeData = buildTreeData(
         new Set([
-            // Filter out paths we don't want to display
+            // Filter out paths from precise index records we don't want to display
             ...[...indexesByIndexerNameByRoot.entries()]
                 .filter(
                     ([_, indexesByIndexerName]) =>
                         // Show only paths with a matching indexer, if set
-                        filterState.indexers.size === 0 ||
-                        ([...indexesByIndexerName.keys()].some(indexerName => filterState.indexers.has(indexerName)) &&
-                            // Show only paths with a precise index record in a failure state, if set
-                            (!filterState.failuresOnly ||
-                                [...indexesByIndexerName.values()].some(indexes =>
-                                    failureStates.has(indexes[0].state.toUpperCase() as PreciseIndexState)
-                                )))
+                        (filterState.indexers.size === 0 ||
+                            [...indexesByIndexerName.keys()].some(indexerName =>
+                                filterState.indexers.has(indexerName)
+                            )) &&
+                        // Show only paths with a precise index record in a failure state, if set
+                        (!filterState.failuresOnly ||
+                            [...indexesByIndexerName.values()].some(indexes => failureStates.has(indexes[0].state)))
                 )
                 .map(([root, _]) => root),
 
-            // Filter out paths we don't want to display
+            // Filter out paths from suggestions we don't want to display
             ...[...availableIndexersByRoot.entries()]
                 .filter(
                     ([_, indexers]) =>
