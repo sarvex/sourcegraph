@@ -1,8 +1,8 @@
 import { mdiCheck, mdiClose, mdiFolderOpenOutline, mdiFolderOutline, mdiTimerSand } from '@mdi/js'
 import { Timestamp } from '@sourcegraph/branded/src/components/Timestamp'
-import { isDefined } from '@sourcegraph/common'
 import { AuthenticatedUser } from '@sourcegraph/shared/src/auth'
 import {
+    Checkbox,
     Container,
     ErrorAlert,
     Icon,
@@ -13,7 +13,7 @@ import {
     TreeNode as WTreeNode,
 } from '@sourcegraph/wildcard'
 import classNames from 'classnames'
-import { FunctionComponent, useState } from 'react'
+import { ChangeEvent, FunctionComponent, useState } from 'react'
 import { PreciseIndexFields, PreciseIndexState } from '../../../../graphql-operations'
 import { useRepoCodeIntelStatus } from '../hooks/useRepoCodeIntelStatus'
 
@@ -134,10 +134,55 @@ export const RepoDashboardPage: FunctionComponent<RepoDashboardPageProps> = ({ a
             <Container className="mb-2">
                 {unfilteredTreeData.length > 0 ? (
                     <>
-                        <div>
+                        <Container className="mb-2">
                             <div>NUM SUCCESSFUL PROJECTS</div>
                             <div>NUM FAILURES</div>
                             <div>NUM CONFIGURABLE</div>
+                        </Container>
+
+                        <div>
+                            <Checkbox
+                                id="suggestions"
+                                label="Show suggestions"
+                                checked={!filterState.hideSuggestions}
+                                onChange={event =>
+                                    setFilterState({ ...filterState, hideSuggestions: !event.target.checked })
+                                }
+                            />
+
+                            <Checkbox
+                                id="failures"
+                                label="Failures only"
+                                checked={filterState.failuresOnly}
+                                onChange={event =>
+                                    setFilterState({ ...filterState, failuresOnly: event.target.checked })
+                                }
+                            />
+
+                            {[
+                                ...new Set([
+                                    ...[...indexesByIndexerNameByRoot.entries()].flatMap(
+                                        ([_, indexesByIndexerName]) => [...indexesByIndexerName.keys()]
+                                    ),
+                                    ...[...availableIndexersByRoot.entries()].flatMap(([_, availableIndexers]) =>
+                                        availableIndexers.map(v => v.index)
+                                    ),
+                                ]),
+                            ]
+                                .sort()
+                                .map(indexer => (
+                                    <Checkbox
+                                        id={`"indexer-${indexer}"`}
+                                        label={`Show only ${indexer}`}
+                                        checked={filterState.indexers.has(indexer)}
+                                        onChange={event =>
+                                            setFilterState({
+                                                ...filterState,
+                                                indexers: new Set(event.target.checked ? [indexer] : []),
+                                            })
+                                        }
+                                    />
+                                ))}
                         </div>
 
                         {filteredTreeData.length > 0 ? (
