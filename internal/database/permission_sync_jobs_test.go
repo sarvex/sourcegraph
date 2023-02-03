@@ -495,6 +495,11 @@ func TestPermissionSyncJobs_Pagination(t *testing.T) {
 			wantJobs:       []*PermissionSyncJob{},
 		},
 		{
+			name:           "After and Order by multiple columns",
+			paginationArgs: PaginationArgs{OrderBy: []OrderByOption{{Field: "user_id"}, {Field: "repository_id"}}, Ascending: true, After: strptr("0")},
+			wantJobs:       jobs,
+		},
+		{
 			name:           "Before",
 			paginationArgs: PaginationArgs{OrderBy: []OrderByOption{{Field: "user_id"}}, Ascending: true, Before: strptr("2")},
 			wantJobs:       jobs,

@@ -10,14 +10,16 @@ import (
 	"github.com/keegancsmith/sqlf"
 )
 
-// LimitOffset specifies SQL LIMIT and OFFSET counts. A pointer to it is typically embedded in other options
-// structs that need to perform SQL queries with LIMIT and OFFSET.
+// LimitOffset specifies SQL LIMIT and OFFSET counts. A pointer to it is
+// typically embedded in other options structs that need to perform SQL queries
+// with LIMIT and OFFSET.
 type LimitOffset struct {
 	Limit  int // SQL LIMIT count
 	Offset int // SQL OFFSET count
 }
 
-// SQL returns the SQL query fragment ("LIMIT %d OFFSET %d") for use in SQL queries.
+// SQL returns the SQL query fragment ("LIMIT %d OFFSET %d") for use in SQL
+// queries.
 func (o *LimitOffset) SQL() *sqlf.Query {
 	if o == nil {
 		return &sqlf.Query{}
@@ -133,6 +135,12 @@ type PaginationArgs struct {
 	Ascending bool
 }
 
+// SQL converts PaginationArgs into a set of sqlf.Query parameters which can be
+// directly used in an SQL query.
+//
+// Note: if OrderBy has 0 fields, "id" field is added by default. If OrderBy has
+// more than 1 fields and After/Before are used, then only the first field of
+// OrderBy is placed in a WHERE clause of the SQL query.
 func (p *PaginationArgs) SQL() *QueryArgs {
 	queryArgs := &QueryArgs{}
 
@@ -143,25 +151,24 @@ func (p *PaginationArgs) SQL() *QueryArgs {
 		orderBy = OrderBy{{Field: "id"}}
 	}
 
-	orderByColumns := orderBy.Columns()
+	// We always have at least 1 column here.
+	orderByColumn := orderBy[0]
 
 	if p.After != nil {
-		columnsStr := strings.Join(orderByColumns, ", ")
-		condition := fmt.Sprintf("(%s) >", columnsStr)
+		condition := fmt.Sprintf("%s >", orderByColumn.Field)
 		if !p.Ascending {
-			condition = fmt.Sprintf("(%s) <", columnsStr)
+			condition = fmt.Sprintf("%s <", orderByColumn.Field)
 		}
 
-		conditions = append(conditions, sqlf.Sprintf(fmt.Sprintf(condition+" (%s)", *p.After)))
+		conditions = append(conditions, sqlf.Sprintf(fmt.Sprintf("%s %s", condition, *p.After)))
 	}
 	if p.Before != nil {
-		columnsStr := strings.Join(orderByColumns, ", ")
-		condition := fmt.Sprintf("(%s) <", columnsStr)
+		condition := fmt.Sprintf("%s <", orderByColumn.Field)
 		if !p.Ascending {
-			condition = fmt.Sprintf("(%s) >", columnsStr)
+			condition = fmt.Sprintf("%s >", orderByColumn.Field)
 		}
 
-		conditions = append(conditions, sqlf.Sprintf(fmt.Sprintf(condition+" (%s)", *p.Before)))
+		conditions = append(conditions, sqlf.Sprintf(fmt.Sprintf("%s %s", condition, *p.Before)))
 	}
 
 	if len(conditions) > 0 {
@@ -190,7 +197,8 @@ func copyPtr[T any](n *T) *T {
 	return &c
 }
 
-// Clone (aka deepcopy) returns a new PaginationArgs object with the same values as "p".
+// Clone (aka deepcopy) returns a new PaginationArgs object with the same values
+// as "p".
 func (p *PaginationArgs) Clone() *PaginationArgs {
 	return &PaginationArgs{
 		First:  copyPtr(p.First),
