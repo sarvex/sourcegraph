@@ -30,7 +30,7 @@ interface FilterState {
     hideSuggestions: boolean
 }
 
-const failureStates = new Set([PreciseIndexState.INDEXING_ERRORED, PreciseIndexState.PROCESSING_ERRORED])
+const failureStates = new Set<string>([PreciseIndexState.INDEXING_ERRORED, PreciseIndexState.PROCESSING_ERRORED])
 
 export const RepoDashboardPage: FunctionComponent<RepoDashboardPageProps> = ({ authenticatedUser, repo }) => {
     const { data, loading, error } = useRepoCodeIntelStatus({ variables: { repository: repo.name } })
@@ -53,6 +53,26 @@ export const RepoDashboardPage: FunctionComponent<RepoDashboardPageProps> = ({ a
         // Then re-group by root
         index => sanitize(index.root)
     )
+
+    // Aggregates
+    const indexerNames = [
+        ...new Set([
+            ...[...indexesByIndexerNameByRoot.values()].flatMap(indexesByIndexerName => [
+                ...indexesByIndexerName.keys(),
+            ]),
+            ...[...availableIndexersByRoot.values()].flatMap(availableIndexers => availableIndexers.map(v => v.index)),
+        ]),
+    ].sort()
+    // count the number of unique indexes matching the given predicate
+    const count = (f: (index: PreciseIndexFields) => boolean): number =>
+        [...indexesByIndexerNameByRoot.values()].flatMap(indexesByIndexerName =>
+            [...indexesByIndexerName.values()].filter(indexes => indexes.some(f))
+        ).length
+    const successCount = count(index => index.state === PreciseIndexState.COMPLETED)
+    const failureCount = count(index => failureStates.has(index.state))
+    const unconfiguredCount = [...availableIndexersByRoot.values()]
+        .map(availableIndexers => availableIndexers.length)
+        .reduce((sum, value) => sum + value, 0)
 
     // Construct tree data without any filters
     const unfilteredTreeData = buildTreeData(
@@ -135,9 +155,18 @@ export const RepoDashboardPage: FunctionComponent<RepoDashboardPageProps> = ({ a
                 {unfilteredTreeData.length > 0 ? (
                     <>
                         <Container className="mb-2">
-                            <div>NUM SUCCESSFUL PROJECTS</div>
-                            <div>NUM FAILURES</div>
-                            <div>NUM CONFIGURABLE</div>
+                            <div className="d-inline p-4 m-4 b-2">
+                                <span className="d-inline text-success">{successCount}</span>
+                                <span className="text-muted ml-1">Successfully indexed projects</span>
+                            </div>
+                            <div className="d-inline p-4 m-4 b-2">
+                                <span className="d-inline text-danger">{failureCount}</span>
+                                <span className="text-muted ml-1">Current failures</span>
+                            </div>
+                            <div className="d-inline p-4 m-4 b-2">
+                                <span className="d-inline">{unconfiguredCount}</span>
+                                <span className="text-muted ml-1">Unconfigured projects</span>
+                            </div>
                         </Container>
 
                         <div>
@@ -159,30 +188,19 @@ export const RepoDashboardPage: FunctionComponent<RepoDashboardPageProps> = ({ a
                                 }
                             />
 
-                            {[
-                                ...new Set([
-                                    ...[...indexesByIndexerNameByRoot.entries()].flatMap(
-                                        ([_, indexesByIndexerName]) => [...indexesByIndexerName.keys()]
-                                    ),
-                                    ...[...availableIndexersByRoot.entries()].flatMap(([_, availableIndexers]) =>
-                                        availableIndexers.map(v => v.index)
-                                    ),
-                                ]),
-                            ]
-                                .sort()
-                                .map(indexer => (
-                                    <Checkbox
-                                        id={`"indexer-${indexer}"`}
-                                        label={`Show only ${indexer}`}
-                                        checked={filterState.indexers.has(indexer)}
-                                        onChange={event =>
-                                            setFilterState({
-                                                ...filterState,
-                                                indexers: new Set(event.target.checked ? [indexer] : []),
-                                            })
-                                        }
-                                    />
-                                ))}
+                            {indexerNames.map(indexer => (
+                                <Checkbox
+                                    id={`"indexer-${indexer}"`}
+                                    label={`Show only ${indexer}`}
+                                    checked={filterState.indexers.has(indexer)}
+                                    onChange={event =>
+                                        setFilterState({
+                                            ...filterState,
+                                            indexers: new Set(event.target.checked ? [indexer] : []),
+                                        })
+                                    }
+                                />
+                            ))}
                         </div>
 
                         {filteredTreeData.length > 0 ? (
@@ -255,8 +273,7 @@ const TreeNode: FunctionComponent<TreeNodeProps> = ({
             .filter(
                 ([indexerName, indexes]) =>
                     (filterState.indexers.size === 0 || filterState.indexers.has(indexerName)) &&
-                    (!filterState.failuresOnly ||
-                        indexes.some(index => failureStates.has(index.state.toUpperCase() as PreciseIndexState)))
+                    (!filterState.failuresOnly || indexes.some(index => failureStates.has(index.state)))
             )
             .map(([indexerName, indexes]) => (
                 <IndexStateBadge key={indexerName} indexes={indexes} />
