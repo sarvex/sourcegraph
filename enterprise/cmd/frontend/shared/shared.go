@@ -22,6 +22,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/enterprise/cmd/frontend/internal/compute"
 	"github.com/sourcegraph/sourcegraph/enterprise/cmd/frontend/internal/dotcom"
 	executor "github.com/sourcegraph/sourcegraph/enterprise/cmd/frontend/internal/executorqueue"
+	"github.com/sourcegraph/sourcegraph/enterprise/cmd/frontend/internal/insights"
 	licensing "github.com/sourcegraph/sourcegraph/enterprise/cmd/frontend/internal/licensing/init"
 	"github.com/sourcegraph/sourcegraph/enterprise/cmd/frontend/internal/notebooks"
 	_ "github.com/sourcegraph/sourcegraph/enterprise/cmd/frontend/internal/registry"
@@ -29,7 +30,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/enterprise/cmd/frontend/internal/searchcontexts"
 	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel"
 	codeintelshared "github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/shared"
-	"github.com/sourcegraph/sourcegraph/enterprise/internal/insights"
+	"github.com/sourcegraph/sourcegraph/enterprise/internal/scim"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/conf/conftypes"
 	"github.com/sourcegraph/sourcegraph/internal/database"
@@ -50,6 +51,7 @@ var initFunctions = map[string]EnterpriseInitializer{
 	"insights":       insights.Init,
 	"licensing":      licensing.Init,
 	"notebooks":      notebooks.Init,
+	"scim":           scim.Init,
 	"searchcontexts": searchcontexts.Init,
 	"repos.webhooks": webhooks.Init,
 }

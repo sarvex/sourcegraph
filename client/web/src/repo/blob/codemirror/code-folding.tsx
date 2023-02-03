@@ -160,6 +160,7 @@ export function codeFoldingExtension(): Extension {
 
         EditorView.theme({
             '.cm-foldGutter .fold-marker': {
+            '.cm-foldGutter': {
                 height: '1rem',
                 width: '1rem',
             },
